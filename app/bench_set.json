@@ -1,0 +1,14 @@
+[
+  {
+    "image": "real_landmark.jpg",
+    "lat": 52.5163,
+    "lon": 13.3777,
+    "label": "Brandenburg Gate, Berlin"
+  },
+  {
+    "image": "nerja_street.jpg",
+    "lat": 36.745,
+    "lon": -3.873,
+    "label": "Nerja, Spain"
+  }
+]

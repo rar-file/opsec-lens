@@ -8,9 +8,11 @@ A **defensive, multimodal, multi-agent OSINT tool**. Upload a photo and a swarm 
 
 Built for the **Cerebras × Google DeepMind Gemma 4 hackathon** — every bit of intelligence runs on **`gemma-4-31b` on Cerebras** (~1,500 tok/s).
 
-![OPSEC Lens demo](demo.gif)
+### 🌐 Live demo & walkthrough → **[opseclens.vercel.app](https://opseclens.vercel.app)**
 
-▶︎ **[Watch the full-resolution demo (MP4)](demo.mp4)**
+![OPSEC Lens demo](assets/demo.gif)
+
+▶︎ **[Watch the full 1080p · 60 fps demo (MP4)](assets/demo.mp4)**
 
 </div>
 
@@ -52,16 +54,30 @@ EXIF GPS check
 
 ```bash
 export CEREBRAS_API_KEY=csk-...      # your Cerebras key
-pip install requests pillow playwright
+pip install -r requirements.txt
 playwright install chrome            # for the real Street View capture
-python3 server.py                    # → http://localhost:8124
+cd app && python3 server.py          # → http://localhost:8124
 ```
 
 Modes: **Deep scan** (full pipeline, ~30 s) or **Fast** (~10 s). Optional `GOOGLE_MAPS_API_KEY` swaps the headless Street-View capture for the Static API. No paid maps required — geocoding is OpenStreetMap/Nominatim, aerial is keyless ESRI.
 
+## Project structure
+
+```
+opsec-lens/
+├── app/             the multi-agent application  ·  run:  cd app && python3 server.py
+│   ├── server.py · pipeline.py · llm.py · geo.py
+│   ├── index.html                         cinematic single-file front end
+│   └── cues · scrub · confidence · sun/shadow · rag · …   (one module per capability)
+├── site/            the landing page deployed to Vercel
+├── assets/          demo.mp4 · demo.gif
+├── docs/            cited geolocation research
+└── requirements.txt
+```
+
 ## Built on the research
 
-The geolocation techniques and the defensive countermeasures are grounded in a cited survey of the field (frontier-model benchmarks, the GeoGuessr/OSINT cue meta, cross-view retrieval, sun/shadow chronolocation) — see [`RESEARCH_GEOLOCATION.md`](RESEARCH_GEOLOCATION.md).
+The geolocation techniques and the defensive countermeasures are grounded in a cited survey of the field (frontier-model benchmarks, the GeoGuessr/OSINT cue meta, cross-view retrieval, sun/shadow chronolocation) — see [`docs/research-geolocation.md`](docs/research-geolocation.md).
 
 ## Stack
 
