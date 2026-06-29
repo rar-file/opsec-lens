@@ -1,18 +1,18 @@
 <div align="center">
 
-# OPSEC Lens
+# Traced
 
 ### See what your photo reveals about where you live — before you post it.
 
-A **defensive, multimodal, multi-agent OSINT tool**. Upload a photo and a swarm of vision agents pinpoints where it was taken from visual clues alone, proves it against real Google Street View, then hands you an OPSEC report of exactly what to scrub.
+A **defensive, multimodal, multi-agent OSINT tool**. Upload a photo and a swarm of vision agents pinpoints where it was taken from visual clues alone, proves it against real Google Street View, then hands you an exposure report of exactly what to scrub.
 
 Built for the **Cerebras × Google DeepMind Gemma 4 hackathon** — every bit of intelligence runs on **`gemma-4-31b` on Cerebras** (~1,500 tok/s).
 
-### 🌐 Live demo & walkthrough → **[opseclens.vercel.app](https://opseclens.vercel.app)**
+### 🌐 Live demo & walkthrough → **[traced-osint.vercel.app](https://traced-osint.vercel.app)**
 
-![OPSEC Lens demo](assets/demo.gif?v=nb)
+![Traced demo](assets/demo.gif?v=tr)
 
-▶︎ **[Watch the full 1080p · 60 fps demo (MP4)](assets/demo.mp4?v=nb)**
+▶︎ **[Watch the full 1080p · 60 fps demo (MP4)](assets/demo.mp4?v=tr)**
 
 </div>
 
@@ -20,7 +20,7 @@ Built for the **Cerebras × Google DeepMind Gemma 4 hackathon** — every bit of
 
 ## Why
 
-AI photo-geolocation has crossed into genuinely unsettling territory: frontier models now place ordinary personal photos at **city / sub-kilometre** level, and retrieval pipelines push parts of that to **~50 m**. OPSEC Lens turns that capability around — point it at **your own** photos to see what they leak, so you can fix it before it's public. It's a privacy tool, not a tracking one.
+AI photo-geolocation has crossed into genuinely unsettling territory: frontier models now place ordinary personal photos at **city / sub-kilometre** level, and retrieval pipelines push parts of that to **~50 m**. Traced turns that capability around — point it at **your own** photos to see what they leak, so you can fix it before it's public. It's a privacy tool, not a tracking one.
 
 ## How it works
 
@@ -37,7 +37,7 @@ EXIF GPS check
         ↓ precise pinpoint            street / house number — only if actually legible
         ↓ landmark triangulation      geocode anchors (free OSM / Nominatim)
         ↓ visual verification         capture REAL Street View, Gemma compares it to your photo
-   → calibrated location + OPSEC leak report + scrub checklist
+   → calibrated location + exposure report + scrub checklist
 ```
 
 ## What it surfaces
@@ -47,7 +47,7 @@ EXIF GPS check
 - **Cue-stack meter.** How many *independent* location cues corroborate the guess — stack ~5 and you're usually inside a few km.
 - **Sun & shadow chronolocation.** What the shadows leak about your latitude and the time of day.
 - **Adversarial debate.** A prosecutor and a skeptic argue each candidate before the verdict.
-- **OPSEC leak report.** Severity-ranked leaks + a concrete scrub checklist (strip EXIF, blur plates/house-numbers, downscale to defeat super-res OCR, "no-EXIF ≠ safe", delay posting…).
+- **Exposure report.** Severity-ranked leaks + a concrete scrub checklist (strip EXIF, blur plates/house-numbers, downscale to defeat super-res OCR, "no-EXIF ≠ safe", delay posting…).
 - **Live speed HUD.** Tokens, agents, and **tok/s** ticking in real time — the Cerebras story.
 
 ## Run it
@@ -64,7 +64,7 @@ Modes: **Deep scan** (full pipeline, ~30 s) or **Fast** (~10 s). Optional `GOOGL
 ## Project structure
 
 ```
-opsec-lens/
+traced/
 ├── app/             the multi-agent application  ·  run:  cd app && python3 server.py
 │   ├── server.py · pipeline.py · llm.py · geo.py
 │   ├── index.html                         cinematic single-file front end

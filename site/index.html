@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>OPSEC Lens — see what your photo reveals about where you live</title>
+<title>Traced — see what your photo reveals about where you live</title>
 <meta name="description" content="A defensive, multimodal, multi-agent OSINT tool. Upload a photo and a swarm of Gemma-4 vision agents pinpoints where it was taken from visual clues alone, then tells you what to scrub before you post it." />
-<meta property="og:title" content="OPSEC Lens" />
+<meta property="og:title" content="Traced" />
 <meta property="og:description" content="See what your photo reveals about where you live, before you post it. Built on gemma-4-31b (Cerebras)." />
 <meta property="og:type" content="website" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='1' y='1' width='22' height='22' rx='5' fill='%23ffd400' stroke='%2314110a' stroke-width='2'/%3E%3Ccircle cx='10.5' cy='10.5' r='4.5' fill='none' stroke='%2314110a' stroke-width='2'/%3E%3Cpath d='M14 14l4 4' stroke='%2314110a' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
@@ -123,12 +123,12 @@ footer{border-top:var(--bd) solid var(--ink);background:var(--surf);padding:40px
 </head>
 <body>
 <nav><div class="wrap nav">
-  <div class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="5.5" stroke="#fff" stroke-width="2.2"/><path d="M15 15l4 4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span> OPSEC&nbsp;Lens</div>
+  <div class="brand"><span class="mark"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="5.5" stroke="#fff" stroke-width="2.2"/><path d="M15 15l4 4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span> Traced</div>
   <div class="nlinks">
     <a href="#how">How it works</a>
     <a href="#features">Features</a>
     <a href="#demo">Demo</a>
-    <a class="gh" href="https://github.com/rar-file/opsec-lens" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.4 9.4 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9v2.82c0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg> GitHub</a>
+    <a class="gh" href="https://github.com/rar-file/traced" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49v-1.7c-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.36 1.12 2.94.85.09-.66.35-1.12.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.4 9.4 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9v2.82c0 .27.18.6.69.49A10.26 10.26 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg> GitHub</a>
   </div>
 </div></nav>
 
@@ -136,16 +136,16 @@ footer{border-top:var(--bd) solid var(--ink);background:var(--surf);padding:40px
 <section class="hero wrap">
   <div class="eyebrow"><span class="d"></span> Cerebras × Google&nbsp;DeepMind · Gemma&nbsp;4 hackathon</div>
   <h1>See what your photo reveals about <span class="g">where you live</span></h1>
-  <p class="sub">OPSEC Lens is a defensive, multi-agent OSINT tool. Drop in a photo and a swarm of Gemma-4 vision agents pinpoints where it was taken from visual clues alone, then hands you a report of exactly what to scrub before you post it.</p>
+  <p class="sub">Traced is a defensive, multi-agent OSINT tool. Drop in a photo and a swarm of Gemma-4 vision agents pinpoints where it was taken from visual clues alone, then hands you a report of exactly what to scrub before you post it.</p>
   <div class="cta">
     <a class="btn primary" href="#demo"><svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7z" fill="currentColor"/></svg> Watch the demo</a>
-    <a class="btn ghost" href="https://github.com/rar-file/opsec-lens" target="_blank" rel="noopener">View source on GitHub</a>
+    <a class="btn ghost" href="https://github.com/rar-file/traced" target="_blank" rel="noopener">View source on GitHub</a>
   </div>
 </section>
 
 <section class="demo wrap" id="demo">
   <div class="vidframe">
-    <video src="demo.mp4?v=nb" poster="poster.jpg?v=nb" autoplay muted loop playsinline controls preload="metadata"></video>
+    <video src="demo.mp4?v=tr" poster="poster.jpg?v=tr" autoplay muted loop playsinline controls preload="metadata"></video>
   </div>
   <div class="vcap">Real run · an ordinary street geolocated from stone, a minibus and a hillside → <b>Hebden Bridge, West Yorkshire</b>. No GPS metadata.</div>
 </section>
@@ -168,7 +168,7 @@ footer{border-top:var(--bd) solid var(--ink);background:var(--surf);padding:40px
     <div class="pstep"><div class="n">2</div><div><div class="t">Six recon lenses + sun &amp; shadow</div><div class="d">Environment, built environment, text/language, culture, infrastructure, plus solar geometry that leaks your latitude and the time of day.</div></div></div>
     <div class="pstep"><div class="n">3</div><div><div class="t">Hypothesise &amp; debate</div><div class="d">Candidate locations are ranked, then a prosecutor and a skeptic argue each one before the verdict.</div></div></div>
     <div class="pstep"><div class="n">4</div><div><div class="t">Pinpoint &amp; verify</div><div class="d">Triangulate landmarks via OpenStreetMap, then capture <em>real</em> Google Street View and have Gemma confirm it's the same place.</div></div></div>
-    <div class="pstep"><div class="n">5</div><div><div class="t">OPSEC leak report</div><div class="d">A calibrated location plus a severity-ranked list of what every clue gives away, and exactly how to scrub it.</div></div></div>
+    <div class="pstep"><div class="n">5</div><div><div class="t">Exposure report</div><div class="d">A calibrated location plus a severity-ranked list of what every clue gives away, and exactly how to scrub it.</div></div></div>
   </div>
 </section>
 
@@ -181,7 +181,7 @@ footer{border-top:var(--bd) solid var(--ink);background:var(--surf);padding:40px
     <div class="card"><div class="ci"><svg viewBox="0 0 24 24" fill="none"><path d="M4 18V8M10 18V5M16 18v-7M22 18V10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div><h3>Cue-stack meter</h3><p>How many <em>independent</em> location cues corroborate the guess. Stack ~5 and you're usually inside a few kilometres.</p></div>
     <div class="card"><div class="ci"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div><h3>Sun &amp; shadow chronolocation</h3><p>What the shadows give away about your latitude band, the season and the time of day.</p></div>
     <div class="card"><div class="ci"><svg viewBox="0 0 24 24" fill="none"><path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><rect x="3" y="3" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2.2"/></svg></div><h3>Adversarial debate</h3><p>A prosecutor and a skeptic argue every candidate, so the verdict isn't one model's lucky guess.</p></div>
-    <div class="card"><div class="ci"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3>OPSEC leak report</h3><p>Every leak, ranked by severity, with a concrete scrub checklist: strip EXIF, blur plates, downscale, crop the skyline.</p></div>
+    <div class="card"><div class="ci"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h3>Exposure report</h3><p>Every leak, ranked by severity, with a concrete scrub checklist: strip EXIF, blur plates, downscale, crop the skyline.</p></div>
   </div>
 </section>
 
@@ -190,7 +190,7 @@ footer{border-top:var(--bd) solid var(--ink);background:var(--surf);padding:40px
     <div class="big">
       <div class="kicker">Defensive by design</div>
       <h2>Point it at your <em>own</em> photos</h2>
-      <p class="lead">The same capability that makes this unsettling is exactly why you should run it on yourself first. OPSEC Lens shows you what an attacker could already work out, so you can fix it before you post. It is a privacy tool, not a tracking one.</p>
+      <p class="lead">The same capability that makes this unsettling is exactly why you should run it on yourself first. Traced shows you what an attacker could already work out, so you can fix it before you post. It is a privacy tool, not a tracking one.</p>
       <div class="chips"><span>Strip EXIF</span><span>Blur plates &amp; house numbers</span><span>Crop the skyline</span><span>Downscale</span><span>Delay real-time posts</span></div>
     </div>
   </div>
@@ -200,17 +200,17 @@ footer{border-top:var(--bd) solid var(--ink);background:var(--surf);padding:40px
   <h2>Run it, or read how it works</h2>
   <p class="lead" style="margin-left:auto;margin-right:auto">Full source, the multi-agent pipeline, and a cited research survey of AI photo-geolocation.</p>
   <div class="cta">
-    <a class="btn primary" href="https://github.com/rar-file/opsec-lens" target="_blank" rel="noopener">Open the GitHub repo</a>
-    <a class="btn ghost" href="https://github.com/rar-file/opsec-lens/blob/main/docs/research-geolocation.md" target="_blank" rel="noopener">Read the research</a>
+    <a class="btn primary" href="https://github.com/rar-file/traced" target="_blank" rel="noopener">Open the GitHub repo</a>
+    <a class="btn ghost" href="https://github.com/rar-file/traced/blob/main/docs/research-geolocation.md" target="_blank" rel="noopener">Read the research</a>
   </div>
 </section>
 </main>
 
 <footer><div class="wrap">
   <div class="foot">
-    <div class="brand" style="font-size:15px"><span class="mark" style="width:28px;height:28px;border-radius:8px"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="5.5" stroke="#fff" stroke-width="2.2"/><path d="M15 15l4 4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span> OPSEC&nbsp;Lens</div>
-    <a href="https://github.com/rar-file/opsec-lens" target="_blank" rel="noopener">GitHub</a>
-    <a href="https://github.com/rar-file/opsec-lens/blob/main/docs/research-geolocation.md" target="_blank" rel="noopener">Research</a>
+    <div class="brand" style="font-size:15px"><span class="mark" style="width:28px;height:28px;border-radius:8px"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="5.5" stroke="#fff" stroke-width="2.2"/><path d="M15 15l4 4" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></span> Traced</div>
+    <a href="https://github.com/rar-file/traced" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://github.com/rar-file/traced/blob/main/docs/research-geolocation.md" target="_blank" rel="noopener">Research</a>
     <span class="sp mono">gemma-4-31b · Cerebras</span>
   </div>
   <div class="note">Built for the Cerebras × Google DeepMind Gemma 4 hackathon. Defensive use only. Analyze photos you own to reduce what you leak; do not use it to locate other people.</div>
