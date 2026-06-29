@@ -38,10 +38,11 @@ class Handler(BaseHTTPRequestHandler):
             from urllib.parse import parse_qs, urlparse
             q = parse_qs(urlparse(self.path).query)
             lat = q.get("lat", ["0"])[0]; lon = q.get("lon", ["0"])[0]; hd = q.get("heading", ["0"])[0]
+            w = q.get("w", ["640"])[0]; h = q.get("h", ["420"])[0]
             emb = (f"https://www.google.com/maps?q=&layer=c&cbll={lat},{lon}"
                    f"&cbp=11,{hd},0,0,0&output=svembed")
             html = ('<!doctype html><html><body style="margin:0;background:#000;overflow:hidden">'
-                    f'<iframe src="{emb}" width="640" height="420" style="border:0;display:block">'
+                    f'<iframe src="{emb}" width="{w}" height="{h}" style="border:0;display:block">'
                     '</iframe></body></html>')
             body = html.encode()
             self._headers(200, "text/html; charset=utf-8",
