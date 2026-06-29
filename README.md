@@ -10,9 +10,9 @@ Built for the **Cerebras × Google DeepMind Gemma 4 hackathon** — every bit of
 
 ### 🌐 Live demo & walkthrough → **[opseclens.vercel.app](https://opseclens.vercel.app)**
 
-![OPSEC Lens demo](assets/demo.gif)
+![OPSEC Lens demo](assets/demo.gif?v=nb)
 
-▶︎ **[Watch the full 1080p · 60 fps demo (MP4)](assets/demo.mp4)**
+▶︎ **[Watch the full 1080p · 60 fps demo (MP4)](assets/demo.mp4?v=nb)**
 
 </div>
 
