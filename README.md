@@ -48,6 +48,7 @@ EXIF GPS check
 - **Sun & shadow chronolocation.** What the shadows leak about your latitude and the time of day.
 - **Adversarial debate.** A prosecutor and a skeptic argue each candidate before the verdict.
 - **Exposure report.** Severity-ranked leaks + a concrete scrub checklist (strip EXIF, blur plates/house-numbers, downscale to defeat super-res OCR, "no-EXIF ≠ safe", delay posting…).
+- **Auto-redact (one tap).** Don't just tell you what leaks — fix it. Gemma 4 locates every plate, house number, sign and face, then blurs and stamps them into a **downloadable, post-safe copy**.
 - **Live speed HUD.** Tokens, agents, and **tok/s** ticking in real time — the Cerebras story.
 
 ## Run it

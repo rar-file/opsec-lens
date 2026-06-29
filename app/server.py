@@ -53,6 +53,8 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(b"{}")
 
     def do_POST(self):
+        if self.path == "/api/redact":
+            return self._do_redact()
         if self.path != "/api/analyze":
             self._headers(404, "application/json", {"Content-Length": "2", "Connection": "close"})
             self.wfile.write(b"{}")
@@ -106,6 +108,48 @@ class Handler(BaseHTTPRequestHandler):
                 emit({"stage": "fatal", "status": "error", "error": str(e)[:400]})
             except Exception:
                 pass
+
+
+    def _do_redact(self):
+        length = int(self.headers.get("Content-Length", 0))
+        try:
+            req = json.loads(self.rfile.read(length) or "{}")
+        except Exception:
+            self._headers(400, "application/json", {"Connection": "close"})
+            self.wfile.write(b'{"error":"bad json"}')
+            return
+
+        data_url = req.get("image", "")
+        if not data_url:
+            self._headers(400, "application/json", {"Connection": "close"})
+            self.wfile.write(b'{"error":"no image"}')
+            return
+
+        import base64
+        import io
+
+        import redact
+        from llm import load_image
+
+        try:
+            raw = data_url.split(",", 1)[1] if data_url.startswith("data:") else data_url
+            img = load_image(base64.b64decode(raw))
+            boxes = redact.detect_sensitive(data_url)
+            out = redact.redact_image(img, boxes)
+            buf = io.BytesIO()
+            out.save(buf, format="PNG")
+            out_url = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+            payload = json.dumps({"image": out_url, "boxes": boxes}).encode("utf-8")
+        except Exception as e:  # noqa: BLE001
+            payload = json.dumps({"error": str(e)[:300]}).encode("utf-8")
+            self._headers(500, "application/json",
+                          {"Content-Length": str(len(payload)), "Connection": "close"})
+            self.wfile.write(payload)
+            return
+
+        self._headers(200, "application/json",
+                      {"Content-Length": str(len(payload)), "Connection": "close"})
+        self.wfile.write(payload)
 
 
 def main():

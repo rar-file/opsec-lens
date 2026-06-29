@@ -370,6 +370,49 @@ header{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap
   .card{transition:opacity .25s ease; transform:none}
   .dot,.sweep,.scanline{display:none}
 }
+/* ---------- AUTO-REDACT maximalist panel ---------- */
+.redactpanel{position:relative; overflow:hidden; border:4px solid #111;
+  background:
+    repeating-linear-gradient(135deg,#ff2d9b 0 18px,#18e0ff 18px 36px,#b6ff1a 36px 54px,#ff6a00 54px 72px);
+  box-shadow:10px 10px 0 #111, -4px -4px 0 #18e0ff inset; border-radius:14px; padding:22px}
+.redactpanel::before{content:""; position:absolute; inset:7px; background:#0c0c10;
+  border:3px dashed #ff2d9b; border-radius:9px; z-index:0}
+.redactpanel > *{position:relative; z-index:1}
+.rdx-stamp{position:absolute; top:10px; right:-46px; z-index:2; transform:rotate(18deg);
+  background:#b6ff1a; color:#111; font-weight:900; letter-spacing:1px; font-size:13px;
+  padding:7px 56px; border:3px solid #111; box-shadow:3px 3px 0 #ff2d9b; text-transform:uppercase}
+.rdx-h{display:flex; align-items:center; gap:10px; color:#fff; font-size:22px; font-weight:900;
+  text-transform:uppercase; letter-spacing:.5px; margin:4px 0 6px;
+  text-shadow:3px 3px 0 #ff2d9b, -2px -2px 0 #18e0ff}
+.rdx-n{background:#ff6a00!important; color:#111!important; border:3px solid #111; box-shadow:2px 2px 0 #18e0ff}
+.rdx-sub{color:#cfeaff; font-weight:600; font-size:13px; line-height:1.45; margin:0 0 16px; max-width:560px}
+.rdx-cta{display:inline-block; cursor:pointer; border:4px solid #111; border-radius:10px;
+  background:linear-gradient(90deg,#ff2d9b,#ff6a00); color:#fff; font-weight:900; font-size:17px;
+  letter-spacing:.5px; text-transform:uppercase; padding:16px 24px; box-shadow:6px 6px 0 #18e0ff;
+  transform:rotate(-1.2deg); transition:transform .12s ease, box-shadow .12s ease}
+.rdx-cta:hover{transform:rotate(0deg) scale(1.03); box-shadow:9px 9px 0 #b6ff1a}
+.rdx-cta:active{transform:translate(4px,4px); box-shadow:2px 2px 0 #18e0ff}
+.rdx-cta:disabled{opacity:.6; cursor:wait}
+.rdx-status{margin-top:14px; color:#111; background:#b6ff1a; border:3px solid #111;
+  font-weight:900; text-transform:uppercase; letter-spacing:.5px; padding:10px 14px; border-radius:8px;
+  box-shadow:4px 4px 0 #ff2d9b; display:inline-block; animation:rdxpulse 1s ease-in-out infinite}
+@keyframes rdxpulse{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1.5deg) scale(1.02)}}
+.rdx-result{margin-top:18px}
+.rdx-pair{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+@media (max-width:640px){.rdx-pair{grid-template-columns:1fr}}
+.rdx-fig{margin:0; background:#0c0c10; border:3px solid #111; border-radius:10px; overflow:hidden;
+  box-shadow:5px 5px 0 #18e0ff}
+.rdx-fig:nth-child(2){box-shadow:5px 5px 0 #ff2d9b; transform:rotate(.8deg)}
+.rdx-cap{font-weight:900; text-transform:uppercase; letter-spacing:1px; font-size:13px; padding:8px 12px; color:#111}
+.rdx-cap-bad{background:#ff6a00}
+.rdx-cap-good{background:#b6ff1a}
+.rdx-fig img{display:block; width:100%; height:auto}
+.rdx-dl{display:inline-block; margin-top:16px; text-decoration:none; cursor:pointer;
+  background:#18e0ff; color:#111; font-weight:900; text-transform:uppercase; letter-spacing:.5px;
+  font-size:15px; padding:13px 22px; border:4px solid #111; border-radius:10px;
+  box-shadow:6px 6px 0 #ff2d9b; transform:rotate(1deg); transition:transform .12s ease}
+.rdx-dl:hover{transform:rotate(0) scale(1.04)}
+.rdx-note{margin-top:12px; color:#cfeaff; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.5px}
 </style>
 </head>
 <body>
@@ -519,6 +562,22 @@ header{position:sticky; top:0; z-index:20; display:flex; align-items:center; gap
       <div class="card" id="cReport" hidden>
         <h3><span class="n">7</span> Exposure report</h3>
         <div id="report"></div>
+      </div>
+
+      <div class="card redactpanel" id="cRedact">
+        <div class="rdx-stamp">SCRUB IT</div>
+        <h3 class="rdx-h"><span class="n rdx-n">!</span> Fight back — auto-redact</h3>
+        <p class="rdx-sub">One tap nukes plates, house numbers, signs &amp; faces with neon stickers + blur. Download a safe copy to share.</p>
+        <button id="btnScrub" class="rdx-cta">SCRUB MY PHOTO &rarr; DOWNLOAD SAFE COPY</button>
+        <div id="rdxStatus" class="rdx-status" hidden></div>
+        <div id="rdxResult" class="rdx-result" hidden>
+          <div class="rdx-pair">
+            <figure class="rdx-fig"><figcaption class="rdx-cap rdx-cap-bad">BEFORE</figcaption><img id="rdxBefore" alt="original"></figure>
+            <figure class="rdx-fig"><figcaption class="rdx-cap rdx-cap-good">AFTER / SCRUBBED</figcaption><img id="rdxAfter" alt="redacted"></figure>
+          </div>
+          <a id="rdxDownload" class="rdx-dl" download="traced-scrubbed.png" href="#">&darr; Download scrubbed copy</a>
+          <div id="rdxBoxNote" class="rdx-note"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -958,6 +1017,31 @@ $("addrBody").addEventListener("click",e=>{
   hold.style.cursor="default";
 });
 window.addEventListener("resize",()=>{ clearTimeout(window._rz); window._rz=setTimeout(fixMap,120); });
+
+/* ---------- AUTO-REDACT: scrub & download ---------- */
+$("btnScrub").addEventListener("click", async ()=>{
+  if(!imageDataUrl){ return; }
+  const btn=$("btnScrub"), status=$("rdxStatus"), result=$("rdxResult");
+  btn.disabled=true; result.hidden=true;
+  status.hidden=false; status.textContent="Scrubbing… Gemma is hunting for leaks ⚡";
+  try{
+    const res=await fetch("/api/redact",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({image:imageDataUrl})});
+    if(!res.ok){ throw new Error("server "+res.status); }
+    const data=await res.json();
+    if(!data || !data.image){ throw new Error(data && data.error ? data.error : "no image returned"); }
+    $("rdxBefore").src=imageDataUrl;
+    $("rdxAfter").src=data.image;
+    const dl=$("rdxDownload"); dl.href=data.image; dl.setAttribute("download","traced-scrubbed.png");
+    const n=(data.boxes&&data.boxes.length)||0;
+    $("rdxBoxNote").textContent=n>0 ? (n+" sensitive region"+(n===1?"":"s")+" redacted") : "No obvious leaks detected — exported a clean copy anyway.";
+    status.hidden=true; result.hidden=false;
+  }catch(e){
+    status.textContent="Scrub failed: "+(e&&e.message?e.message:e);
+  }finally{
+    btn.disabled=false;
+  }
+});
 </script>
 </body>
 </html>
