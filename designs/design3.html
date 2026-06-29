@@ -1,0 +1,106 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OPSEC Lens — Luminous</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Manrope',sans-serif;color:#0f172a;background:#fbfcfe;padding:40px 56px 72px;
+ background-image:radial-gradient(800px 400px at 90% -10%,#eef2ff 0%,transparent 60%);}
+:root{--ink:#0f172a;--mut:#64748b;--line:#eaeef5;--acc:#4f46e5;--acc2:#0ea5e9;--ok:#059669}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:0 1px 2px rgba(15,23,42,.04),0 12px 34px rgba(15,23,42,.06)}
+header{display:flex;align-items:center;gap:13px;margin-bottom:34px}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,var(--acc),var(--acc2));
+ display:grid;place-items:center;color:#fff;font-size:20px;box-shadow:0 8px 20px rgba(79,70,229,.35)}
+header h1{font-size:19px;font-weight:800;letter-spacing:-.3px}
+header p{font-size:13px;color:var(--mut)}
+.nav{margin-left:auto;display:flex;gap:8px}
+.nav span{font-size:12.5px;color:var(--mut);background:#f3f5fa;border:1px solid var(--line);padding:8px 13px;border-radius:99px;font-weight:500}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:24px;align-items:stretch}
+.left{padding:38px}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ok);
+ background:#ecfdf5;border:1px solid #a7f3d0;padding:8px 14px;border-radius:99px}
+.left h2{font-size:58px;font-weight:800;letter-spacing:-2px;line-height:1.02;margin:20px 0 8px}
+.left .sub{font-size:17px;color:var(--mut)}
+.left .addr{margin-top:20px;display:inline-flex;align-items:center;gap:9px;font-size:14.5px;font-weight:600;
+ background:#f6f8fd;border:1px solid var(--line);padding:11px 15px;border-radius:13px}
+.conf{margin-top:26px}
+.conf .t{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);font-weight:600;margin-bottom:8px}
+.track{height:9px;border-radius:99px;background:#eef1f7;overflow:hidden}
+.track i{display:block;height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.photo{border-radius:22px;overflow:hidden;position:relative;border:1px solid var(--line)}
+.photo img{width:100%;height:100%;min-height:340px;object-fit:cover;display:block}
+.photo .lab{position:absolute;left:14px;top:14px;font-size:12px;font-weight:600;color:#fff;background:rgba(15,23,42,.55);
+ backdrop-filter:blur(8px);padding:6px 12px;border-radius:99px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:24px 0}
+.stat{padding:22px 24px}
+.stat .n{font-size:30px;font-weight:800;letter-spacing:-1px}
+.stat .n span{font-size:16px;color:var(--mut)}
+.stat .l{font-size:12.5px;color:var(--mut);margin-top:3px;font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.sec{padding:28px}
+.sec h3{font-size:12px;text-transform:uppercase;letter-spacing:1.3px;color:var(--mut);font-weight:700;margin-bottom:18px}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{font-size:13px;font-weight:500;background:#f6f8fd;border:1px solid var(--line);padding:9px 13px;border-radius:11px}
+.chip b{color:var(--acc);font-weight:700}
+.imgs{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+.thumb{border-radius:14px;overflow:hidden;position:relative;border:1px solid var(--line);height:130px}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .s{position:absolute;left:10px;bottom:10px;font-size:12px;font-weight:700;color:#fff;padding:4px 10px;border-radius:8px}
+.thumb.win{outline:2.5px solid var(--ok);outline-offset:-2px}.thumb.win .s{background:var(--ok)}
+.thumb.lose .s{background:#94a3b8}
+.risk{font-size:11.5px;font-weight:800;letter-spacing:.4px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;padding:5px 11px;border-radius:8px}
+.leak{display:flex;gap:13px;padding:14px 0;border-bottom:1px solid var(--line)}
+.leak:last-child{border:none}
+.leak .sev{font-size:10px;font-weight:800;padding:4px 9px;border-radius:7px;height:fit-content}
+.sev.h{background:#fef2f2;color:#dc2626}.sev.m{background:#fffbeb;color:#d97706}
+.leak .t{font-size:14px;font-weight:600}.leak .f{font-size:13px;color:var(--mut);margin-top:3px}
+</style></head><body>
+<header>
+ <div class="logo">◎</div>
+ <div><h1>OPSEC Lens</h1><p>See what your photo gives away — before you post it.</p></div>
+ <div class="nav"><span>gemma-4-31b</span><span>Cerebras · 1500 tok/s</span></div>
+</header>
+
+<div class="hero">
+ <div class="card left">
+  <span class="badge">✓ Visually confirmed against Google Street View</span>
+  <h2>Brandenburg Gate</h2>
+  <div class="sub">Berlin, Germany</div>
+  <div class="addr">📍 Brandenburger Tor 1, Pariser Platz, 10117 Berlin</div>
+  <div class="conf"><div class="t"><span>Location confidence</span><span style="color:var(--acc)">100% · ±50 m</span></div><div class="track"><i></i></div></div>
+ </div>
+ <div class="photo"><span class="lab">Your photo</span><img src="photo.jpg"></div>
+</div>
+
+<div class="stats">
+ <div class="card stat"><div class="n">37</div><div class="l">Cooperating agents</div></div>
+ <div class="card stat"><div class="n">100<span>%</span></div><div class="l">Visual match</div></div>
+ <div class="card stat"><div class="n">24.6<span>k</span></div><div class="l">Tokens used</div></div>
+ <div class="card stat"><div class="n">±50<span>m</span></div><div class="l">Precision radius</div></div>
+</div>
+
+<div class="grid2">
+ <div class="card sec">
+  <h3>Verified against reality</h3>
+  <div class="imgs">
+   <div class="thumb win"><img src="sv.jpg"><span class="s">100% match · Street View</span></div>
+   <div class="thumb lose"><img src="sat.jpg"><span class="s">0% · decoy</span></div>
+  </div>
+  <h3 style="margin-top:24px">What the swarm saw</h3>
+  <div class="chips">
+   <div class="chip"><b>Quadriga sculpture</b> · unique to the gate</div>
+   <div class="chip"><b>Doric columns</b> · Prussian neoclassical</div>
+   <div class="chip"><b>Sandstone</b> · Central European</div>
+   <div class="chip"><b>Plaza</b> · tourist hub</div>
+   <div class="chip"><b>Twilight sky</b> · N. hemisphere</div>
+  </div>
+ </div>
+ <div class="card sec">
+  <h3>OPSEC leak report &nbsp;<span class="risk">MEDIUM RISK · NOT SAFE TO POST</span></h3>
+  <div class="leak"><span class="sev h">HIGH</span><div><div class="t">Quadriga &amp; Doric columns</div><div class="f">Crop the monument to hide the city.</div></div></div>
+  <div class="leak"><span class="sev m">MED</span><div><div class="t">Pariser Platz plaza</div><div class="f">Blur the background or crop tighter.</div></div></div>
+  <div class="leak"><span class="sev m">MED</span><div><div class="t">Real-time presence</div><div class="f">Post on a delay, not live.</div></div></div>
+ </div>
+</div>
+</body></html>

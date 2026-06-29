@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.log
+# heavy dev mockups / iteration screenshots (the demo gif/mp4 are the visuals)
+ui_*.png
+lens_*.png
+designs/*.png
+sv_probe.jpg

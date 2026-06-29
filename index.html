@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OPSEC Lens · photo location intelligence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%2318181b'/%3E%3Ccircle cx='11' cy='11' r='5' fill='none' stroke='white' stroke-width='2'/%3E%3Cpath d='M15 15l4 4' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* neutral product palette (zinc) */
+  --bg:#fafafa; --surf:#ffffff; --surf2:#f4f4f5; --surf3:#fbfbfc;
+  --ink:#18181b; --ink2:#3f3f46; --mut:#71717a; --mut2:#a1a1aa;
+  --line:#e4e4e7; --line2:#f0f0f1;
+  --accent:#2563eb; --accent-d:#1d4ed8; --accent-tint:#eff4ff;
+  --ok:#15803d; --ok-t:#ecfdf3; --warn:#b45309; --warn-t:#fffaeb;
+  --high:#c2410c; --high-t:#fff6ed; --crit:#b91c1c; --crit-t:#fef3f2;
+  --shadow:0 1px 2px rgba(24,24,27,.05);
+  --shadow-md:0 1px 3px rgba(24,24,27,.06), 0 10px 28px -14px rgba(24,24,27,.16);
+  --ease:cubic-bezier(.2,.7,.3,1);
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--ink); background:var(--bg);
+  font-family:'Geist',ui-sans-serif,system-ui,-apple-system,sans-serif;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  min-height:100vh; overflow-x:hidden; font-size:14px; line-height:1.5;
+}
+.g{font-weight:600; letter-spacing:-.02em}
+.mono{font-family:'Geist Mono',ui-monospace,Menlo,monospace; font-feature-settings:"tnum"}
+button{font:inherit}
+a{color:var(--accent)}
+
+/* ---------- top bar ---------- */
+header{
+  position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:14px;
+  padding:0 clamp(16px,3vw,28px); height:56px;
+  background:rgba(255,255,255,.85); backdrop-filter:saturate(1.4) blur(10px); -webkit-backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex; align-items:center; gap:11px}
+.mark{
+  width:30px; height:30px; border-radius:8px; display:grid; place-items:center; flex:none;
+  background:var(--ink); box-shadow:var(--shadow);
+}
+.mark svg{width:17px; height:17px}
+.brand h1{font-size:14.5px; font-weight:600; margin:0; letter-spacing:-.01em; color:var(--ink)}
+.brand .tag{font-size:12px; color:var(--mut2); margin:0; font-weight:450}
+.brand .sep{width:1px; height:18px; background:var(--line); margin:0 2px}
+.hud{margin-left:auto; display:flex; align-items:center; gap:6px; opacity:0; transition:.4s var(--ease)}
+.app.busy .hud, .app.state-reveal .hud{opacity:1}
+.hud .model{font-size:11.5px; color:var(--mut); background:var(--surf2); border:1px solid var(--line2);
+  padding:4px 9px; border-radius:6px; display:flex; align-items:center; gap:6px; font-family:'Geist Mono',ui-monospace,Menlo,monospace}
+.hud .model .dot{width:6px; height:6px; border-radius:50%; background:var(--ok); box-shadow:0 0 0 2px var(--ok-t)}
+.hud .meter{display:flex; align-items:center; gap:0; border:1px solid var(--line); border-radius:7px; overflow:hidden; background:var(--surf)}
+.hud .cell{text-align:center; padding:4px 12px; border-right:1px solid var(--line2)}
+.hud .cell:last-child{border-right:0}
+.hud .cell .v{font-size:12.5px; font-weight:600; font-family:'Geist Mono',ui-monospace,Menlo,monospace; line-height:1.2; color:var(--ink); font-feature-settings:"tnum"}
+.hud .cell .k{font-size:8.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--mut2); margin-top:1px}
+.ghostbtn{display:none; align-items:center; gap:6px; font-size:12.5px; font-weight:500; color:var(--ink); background:var(--surf);
+  border:1px solid var(--line); padding:6px 11px; border-radius:7px; cursor:pointer; transition:.15s}
+.ghostbtn:hover{background:var(--surf2)}
+.app.state-reveal .ghostbtn{display:inline-flex}
+
+/* ---------- stage ---------- */
+.stage{
+  position:relative; z-index:1; display:flex; gap:clamp(24px,3vw,44px);
+  padding:clamp(28px,6vh,72px) clamp(16px,4vw,28px) 64px;
+  min-height:calc(100vh - 56px); align-items:center; justify-content:center;
+}
+.app.state-reveal .stage{flex-direction:column; align-items:center; justify-content:flex-start; padding-top:28px; gap:14px}
+
+/* ---------- left: upload + photo ---------- */
+.left{ width:min(560px,100%); flex:0 1 auto; display:flex; flex-direction:column; align-items:center; }
+.app.state-reveal .left{ width:min(960px,100%); align-self:center }
+
+/* upload state */
+.hero{ width:100%; text-align:center }
+.app.has-photo .hero{ display:none }
+.hero h2{font-size:clamp(28px,3.6vw,40px); font-weight:600; line-height:1.08; letter-spacing:-.03em; margin:0 0 14px; color:var(--ink)}
+.hero h2 .grad{color:var(--accent)}
+.hero p{color:var(--mut); font-size:15px; margin:0 auto 30px; max-width:440px; line-height:1.55}
+.drop{
+  position:relative; display:flex; flex-direction:column; align-items:center; gap:13px;
+  padding:46px 36px; border-radius:14px; cursor:pointer;
+  background:var(--surf); border:1.5px dashed var(--line); transition:.18s var(--ease); box-shadow:var(--shadow);
+}
+.drop:hover, .drop.hot{ border-color:var(--accent); background:var(--accent-tint) }
+.drop .ic{width:50px; height:50px; border-radius:12px; display:grid; place-items:center; flex:none;
+  background:var(--surf2); border:1px solid var(--line); color:var(--ink2); transition:.18s}
+.drop:hover .ic,.drop.hot .ic{background:#fff; border-color:var(--accent); color:var(--accent)}
+.drop .ic svg{width:24px; height:24px}
+.drop .big{font-weight:600; font-size:15.5px; color:var(--ink); letter-spacing:-.01em}
+.drop .small{font-size:12.5px; color:var(--mut); max-width:320px; line-height:1.5}
+.drop .small b{color:var(--ink2); font-weight:600}
+
+/* mode segmented control */
+.seg{display:inline-flex; padding:3px; gap:2px; border-radius:9px; background:var(--surf2); border:1px solid var(--line)}
+.seg button{position:relative; border:0; background:transparent; color:var(--mut); font-weight:500; font-size:12.5px;
+  padding:6px 14px; border-radius:6px; cursor:pointer; transition:.15s; display:flex; align-items:center; gap:6px}
+.seg button .d{font-size:11px; color:var(--mut2)}
+.seg button.active{color:var(--ink); background:var(--surf); box-shadow:var(--shadow)}
+.seg button.active .d{color:var(--mut)}
+
+/* photo stage */
+.photowrap{ width:100%; display:flex; flex-direction:column; align-items:center; }
+.app.state-reveal .photowrap{ flex-direction:row; flex-wrap:wrap; align-items:stretch; justify-content:center; gap:14px; width:100% }
+.photoframe{
+  position:relative; max-width:100%; max-height:70vh; border-radius:var(--r); overflow:hidden;
+  background:#0b0d12; border:1px solid var(--line); box-shadow:var(--shadow-md);
+  transition:border-color .5s var(--ease);
+}
+.photoframe img{display:block; max-width:100%; max-height:70vh; width:auto; height:auto}
+.app.state-reveal .photoframe{max-height:none; flex:1 1 320px; max-width:520px; align-self:flex-start}
+.app.state-reveal .photoframe img{max-height:360px; width:100%; object-fit:cover}
+.app.scanning .photoframe{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent), var(--shadow-md)}
+
+/* scan overlay (over the photo — restrained, monochrome) */
+.lens{position:absolute; inset:0; pointer-events:none; opacity:0; transition:opacity .5s var(--ease)}
+.app.scanning .lens, .lens.locking{opacity:1}
+.lens.gone{opacity:0}
+.dots{position:absolute; inset:0}
+.dot{position:absolute; width:3px; height:3px; border-radius:50%; background:#fff;
+  box-shadow:0 0 6px 1px rgba(255,255,255,.9); opacity:0; transform:scale(0); animation:twinkle 2.2s ease-in-out infinite}
+.dot.b,.dot.p{background:#fff}
+@keyframes twinkle{0%{opacity:0; transform:scale(0)} 25%{opacity:.95; transform:scale(1)} 60%{opacity:.7} 100%{opacity:0; transform:scale(.5)}}
+.lens.gone .dot{animation:none; opacity:0; transition:opacity .4s}
+.sweep{position:absolute; top:-20%; bottom:-20%; left:0; width:50%;
+  background:linear-gradient(100deg, transparent 35%, rgba(255,255,255,.5) 50%, transparent 65%);
+  mix-blend-mode:screen; transform:translateX(-150%) skewX(-9deg); animation:sweep 2.4s cubic-bezier(.5,0,.25,1) infinite}
+@keyframes sweep{0%{transform:translateX(-150%) skewX(-9deg)} 62%,100%{transform:translateX(300%) skewX(-9deg)}}
+.lens.gone .sweep{animation:none; opacity:0}
+.scanline{position:absolute; left:0; right:0; height:1.5px; top:50%;
+  background:rgba(255,255,255,.85); box-shadow:0 0 12px 1px rgba(255,255,255,.6); animation:scanline 2.4s ease-in-out infinite}
+@keyframes scanline{0%{top:4%; opacity:0} 14%{opacity:1} 86%{opacity:1} 100%{top:96%; opacity:0}}
+.lens.gone .scanline{animation:none; opacity:0}
+.brackets b{position:absolute; width:26px; height:26px; border:2px solid rgba(255,255,255,.9); transition:border-color .4s, opacity .4s}
+.brackets b.tl{top:12px; left:12px; border-right:0; border-bottom:0}
+.brackets b.tr{top:12px; right:12px; border-left:0; border-bottom:0}
+.brackets b.bl{bottom:12px; left:12px; border-right:0; border-top:0}
+.brackets b.br{bottom:12px; right:12px; border-left:0; border-top:0}
+.app.scanning .brackets b{animation:bracketPulse 2.4s ease-in-out infinite}
+@keyframes bracketPulse{0%,100%{opacity:.5} 50%{opacity:1}}
+.lens.locking .brackets b{border-color:#4ade80; animation:none; opacity:1}
+
+/* chips on photo (dark-glass over image) */
+.chips-layer{position:absolute; inset:0}
+.pchip{position:absolute; display:flex; align-items:center; gap:6px; transform:translate(-50%,-50%) scale(.7);
+  padding:5px 10px; border-radius:7px; font-size:11.5px; font-weight:500; white-space:nowrap; max-width:170px;
+  background:rgba(15,16,22,.82); border:1px solid rgba(255,255,255,.16); color:#fff;
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); opacity:0;
+  box-shadow:0 6px 16px rgba(0,0,0,.4); animation:chipPop .45s var(--ease) forwards}
+.pchip .pd{width:6px; height:6px; border-radius:50%; background:#60a5fa; flex:none}
+.pchip span{overflow:hidden; text-overflow:ellipsis}
+.pchip.crit{border-color:rgba(248,113,113,.5)}
+.pchip.crit .pd{background:#f87171}
+@keyframes chipPop{0%{opacity:0; transform:translate(-50%,-50%) scale(.7)} 100%{opacity:1; transform:translate(-50%,-50%) scale(1)}}
+
+/* photo caption (reveal) */
+.photolabel{position:absolute; left:0; right:0; bottom:0; padding:34px 14px 13px; opacity:0; transform:translateY(6px);
+  background:linear-gradient(to top, rgba(9,10,13,.9), transparent); transition:.5s var(--ease); pointer-events:none}
+.photolabel.show{opacity:1; transform:none}
+.photolabel .pl-place{font-weight:600; font-size:16px; line-height:1.2; color:#fff; letter-spacing:-.01em}
+.photolabel .pl-sub{font-size:12px; color:#d4d4d8; margin-top:2px; display:flex; align-items:center; gap:7px; flex-wrap:wrap}
+.confbadge{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; color:var(--ok);
+  background:var(--ok-t); border:1px solid #bbf7d0; padding:2px 8px; border-radius:6px}
+.pl-sub .confbadge{color:#86efac; background:rgba(34,197,94,.18); border-color:rgba(134,239,172,.4)}
+
+/* analyze + status */
+.controls{margin-top:22px; width:100%; display:flex; flex-direction:column; align-items:center; gap:14px}
+.app.scanning .controls .analyze, .app.scanning .seg, .app.state-reveal .controls{display:none}
+.analyze{display:inline-flex; align-items:center; gap:9px; font-weight:600; font-size:14.5px; letter-spacing:-.01em;
+  color:#fff; background:var(--ink); border:0; padding:12px 26px; border-radius:9px; cursor:pointer;
+  box-shadow:var(--shadow); transition:.15s var(--ease)}
+.analyze:hover{background:#27272a}
+.analyze:active{transform:translateY(.5px)}
+.analyze svg{width:17px; height:17px}
+.status{display:none; align-items:center; gap:11px; padding:9px 16px; border-radius:9px;
+  background:var(--surf); border:1px solid var(--line); max-width:100%; box-shadow:var(--shadow)}
+.app.scanning .status{display:inline-flex}
+.status .pulse{width:8px; height:8px; border-radius:50%; background:var(--accent); flex:none; position:relative}
+.status .pulse::after{content:""; position:absolute; inset:-4px; border-radius:50%; background:var(--accent); opacity:.3; animation:ring 1.5s ease-out infinite}
+@keyframes ring{0%{transform:scale(.5); opacity:.4} 100%{transform:scale(1.8); opacity:0}}
+.status .txt{font-size:13.5px; font-weight:500; color:var(--ink2)}
+.status .txt b{font-weight:600; color:var(--ink)}
+
+/* facts panel (reveal) */
+.leftsum{display:none; width:100%; padding:4px 18px; border-radius:var(--r);
+  background:var(--surf); border:1px solid var(--line); box-shadow:var(--shadow);
+  opacity:0; transform:translateY(8px); transition:.5s var(--ease)}
+.app.state-reveal .leftsum{display:flex; flex-direction:column; justify-content:center; flex:1 1 240px; min-width:240px}
+.leftsum.in{opacity:1; transform:none}
+.ls-row{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 0; border-bottom:1px solid var(--line2)}
+.ls-row:last-child{border-bottom:0}
+.ls-k{font-size:12px; color:var(--mut); font-weight:450}
+.ls-v{font-size:14px; font-weight:600; color:var(--ink); text-align:right; letter-spacing:-.01em}
+.ls-v.r-low{color:var(--ok)} .ls-v.r-medium{color:var(--warn)} .ls-v.r-high{color:var(--high)} .ls-v.r-critical{color:var(--crit)}
+
+/* ---------- results ---------- */
+.results{flex:1; width:min(960px,100%); min-width:0; display:none; flex-direction:column; gap:14px; padding-bottom:24px}
+.app.state-reveal .results{display:flex}
+.card{position:relative; background:var(--surf); border:1px solid var(--line); border-radius:var(--r); padding:20px 22px;
+  opacity:0; transform:translateY(14px); transition:opacity .45s var(--ease), transform .45s var(--ease); box-shadow:var(--shadow)}
+.card[hidden]{display:none}
+.card.in{opacity:1; transform:none}
+.card h3{font-size:13px; font-weight:600; color:var(--ink); margin:0 0 16px; letter-spacing:-.01em;
+  display:flex; align-items:center; gap:9px; padding-bottom:13px; border-bottom:1px solid var(--line2)}
+.card h3 .n{width:20px; height:20px; border-radius:6px; display:grid; place-items:center; font-size:11px; font-weight:600;
+  background:var(--surf2); color:var(--mut); border:1px solid var(--line); font-family:'Geist Mono',ui-monospace,Menlo,monospace}
+
+/* gps alert */
+.alert{display:flex; gap:12px; align-items:flex-start; background:var(--crit-t); border:1px solid #fecaca;
+  border-radius:10px; padding:14px 16px}
+.alert .ai{width:30px; height:30px; flex:none; border-radius:8px; display:grid; place-items:center; background:#fff; border:1px solid #fecaca; color:var(--crit)}
+.alert .ai svg{width:17px; height:17px}
+.alert .at{font-weight:600; font-size:13.5px; color:var(--crit)}
+.alert .ad{font-size:13px; color:#7f1d1d; margin-top:2px; line-height:1.5}
+.alert .ad b{color:var(--crit); font-weight:600}
+
+/* verdict */
+.verdict{display:grid; grid-template-columns:1fr auto; gap:22px; align-items:center}
+.vplace{font-size:clamp(24px,3vw,34px); font-weight:600; line-height:1.08; letter-spacing:-.03em; color:var(--ink)}
+.vmeta{color:var(--mut); font-size:13px; margin-top:8px; display:flex; flex-wrap:wrap; gap:7px; align-items:center}
+.vmeta .pin{display:inline-flex; align-items:center; gap:5px; color:var(--ink2); font-weight:500}
+.vmeta .pin svg{width:13px; height:13px; color:var(--mut)}
+.vchip{font-size:11.5px; padding:3px 9px; border-radius:6px; background:var(--surf2); border:1px solid var(--line); color:var(--mut)}
+.vreason{grid-column:1/-1; font-size:13.5px; color:var(--ink2); line-height:1.6; margin-top:2px; padding-top:15px; border-top:1px solid var(--line2)}
+.ring{position:relative; width:88px; height:88px; flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .rt{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center}
+.ring .rt b{font-size:21px; font-weight:600; line-height:1; color:var(--ink); letter-spacing:-.02em}
+.ring .rt span{font-size:8.5px; text-transform:uppercase; letter-spacing:.7px; color:var(--mut2); margin-top:3px; font-weight:500}
+
+/* precision & chronolocation card */
+.precband{display:flex; flex-wrap:wrap; align-items:center; gap:10px}
+.precpill{display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:13px; letter-spacing:-.01em;
+  color:var(--accent); background:var(--accent-tint); border:1px solid #cfe0fd; padding:6px 13px; border-radius:8px}
+.precpill .rad{color:var(--ink2); font-weight:500; font-family:'Geist Mono',ui-monospace,Menlo,monospace; font-size:12px}
+.prec-note{font-size:12px; color:var(--mut); line-height:1.5; margin-top:9px}
+.cuestack{margin-top:16px; padding-top:16px; border-top:1px solid var(--line2)}
+.cuestack .cs-top{display:flex; align-items:baseline; gap:9px}
+.cuestack .cs-n{font-size:26px; font-weight:700; letter-spacing:-.03em; color:var(--ink); line-height:1; font-family:'Geist Mono',ui-monospace,Menlo,monospace}
+.cuestack .cs-lbl{font-size:13px; color:var(--ink2); font-weight:500}
+.cuestack .cs-msg{font-size:12.5px; color:var(--mut); margin-top:6px; line-height:1.5}
+.cuefams{display:flex; flex-wrap:wrap; gap:6px; margin-top:11px}
+.cuefam{font-size:11px; font-weight:500; color:var(--ink2); background:var(--surf2); border:1px solid var(--line); border-radius:6px; padding:4px 9px; text-transform:capitalize}
+.sunshadow{margin-top:16px; padding-top:16px; border-top:1px solid var(--line2)}
+.sunshadow .ss-row{font-size:12.5px; color:var(--ink2); margin:6px 0; line-height:1.45}
+.sunshadow .ss-row b{color:var(--ink); font-weight:600}
+
+/* live agent feed (during scan) */
+.feed{display:none; flex-direction:column; gap:6px; width:100%; max-width:520px; margin-top:14px}
+.app.scanning .feed{display:flex}
+.feedline{display:flex; align-items:baseline; gap:9px; font-size:12.5px; color:var(--ink2); line-height:1.4;
+  padding:7px 12px; background:var(--surf); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow);
+  opacity:0; transform:translateY(-6px); animation:feedIn .35s var(--ease) forwards}
+.feedline .fa{flex:none; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; color:var(--accent);
+  background:var(--accent-tint); border:1px solid #d6e4fd; padding:2px 7px; border-radius:5px}
+.feedline .ft{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0}
+@keyframes feedIn{to{opacity:1; transform:none}}
+
+/* hero 'same place' match proof */
+#cMatch{background:linear-gradient(180deg,#fff,#f7faff)}
+.matchwrap{display:grid; grid-template-columns:1fr auto 1fr; gap:14px; align-items:center}
+.mcol{min-width:0}
+.mlabel{font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--mut); font-weight:600; margin-bottom:7px}
+.mcol img{width:100%; height:175px; object-fit:cover; border-radius:10px; border:1px solid var(--line); display:block; background:#0b0d12}
+.mvs{display:flex; flex-direction:column; align-items:center; gap:3px; padding:0 6px}
+.mscore{font-family:'Geist Mono',ui-monospace,Menlo,monospace; font-size:30px; font-weight:700; letter-spacing:-.03em; line-height:1; color:var(--ok)}
+.mverdict{font-size:10px; text-transform:uppercase; letter-spacing:.6px; color:var(--ok); font-weight:600; text-align:center}
+@media(max-width:600px){.matchwrap{grid-template-columns:1fr 1fr} .mvs{grid-column:1/-1; flex-direction:row; gap:10px; order:-1; justify-content:center}}
+
+/* pin drop */
+@keyframes pindrop{0%{transform:translateY(-26px) scale(.5); opacity:0} 55%{transform:translateY(2px) scale(1.08); opacity:1} 100%{transform:translateY(0) scale(1); opacity:1}}
+
+/* map */
+#map{height:300px; border-radius:10px; overflow:hidden; border:1px solid var(--line); background:#eef1f6}
+.leaflet-container{background:#eef1f6; font-family:inherit}
+.leaflet-control-zoom a{background:#fff!important; color:var(--ink2)!important; border-color:var(--line)!important}
+
+/* address / streetview */
+.addr{font-weight:600; font-size:17px; line-height:1.3; color:var(--ink); letter-spacing:-.01em}
+.addrrow{display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px}
+.prec{font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:4px 9px; border-radius:6px;
+  background:var(--surf2); color:var(--mut); border:1px solid var(--line)}
+.prec.exact_address{background:var(--crit-t); color:var(--crit); border-color:#fecaca}
+.prec.street{background:var(--high-t); color:var(--high); border-color:#fed7aa}
+.readtext{font-size:12.5px; color:var(--mut)}
+.readtext b{color:var(--ink2); font-weight:600}
+.svframe{width:100%; height:300px; border:1px solid var(--line); border-radius:10px; margin-top:13px; background:#000; display:block}
+.svhold{position:relative; width:100%; height:300px; border:1px solid var(--line); border-radius:10px; margin-top:13px;
+  overflow:hidden; cursor:pointer; background:#0d0f14; display:block}
+.svhold .svposter{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s var(--ease)}
+.svhold:hover .svposter{transform:scale(1.03)}
+.svhold .svph{position:absolute; inset:0; background:#e4e4e7}
+.svhold::after{content:""; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.5), transparent 55%); pointer-events:none}
+.svhold .svplay{position:absolute; left:0; right:0; bottom:0; z-index:2; display:flex; align-items:center; gap:10px; padding:13px 15px;
+  font-size:13px; font-weight:500; color:#fff}
+.svhold .pp{width:30px; height:30px; border-radius:8px; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.3); display:grid; place-items:center; flex:none; backdrop-filter:blur(4px)}
+.svhold .pp svg{width:16px; height:16px}
+.svhold .live{position:absolute; top:11px; right:11px; z-index:2; font-size:9.5px; font-weight:600; letter-spacing:.5px; text-transform:uppercase;
+  color:#fff; background:rgba(10,10,13,.6); border:1px solid rgba(255,255,255,.2); padding:4px 9px; border-radius:6px;
+  display:flex; align-items:center; gap:6px}
+.svhold .live::before{content:""; width:6px; height:6px; border-radius:50%; background:#4ade80}
+.svbtns{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap}
+.svbtns a{display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:500; text-decoration:none;
+  color:#fff; background:var(--ink); padding:8px 14px; border-radius:8px; transition:.15s}
+.svbtns a:hover{background:#27272a}
+.svbtns a.alt{background:var(--surf); border:1px solid var(--line); color:var(--ink)}
+.svbtns a.alt:hover{background:var(--surf2)}
+.satimg{width:100%; border-radius:10px; margin-top:13px; border:1px solid var(--line); display:block}
+.satlabel{font-size:11px; color:var(--mut2); margin-top:7px; text-transform:uppercase; letter-spacing:.5px; font-weight:500}
+.note{font-size:13px; color:var(--mut); padding:8px 0; line-height:1.5}
+
+/* visual match cards */
+.vgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:11px}
+.vcard{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--surf); transition:.25s var(--ease)}
+.vcard img{width:100%; height:100px; object-fit:cover; display:block; background:#000}
+.vcard .noimg{height:100px; display:grid; place-items:center; color:var(--mut2); font-size:11px; background:var(--surf2)}
+.vcard .vm{padding:9px 11px}
+.vcard .sc{font-weight:600; font-size:14px; letter-spacing:-.01em}
+.vcard .pl{font-size:11px; color:var(--mut); margin-top:3px; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden}
+.vcard.win{border-color:var(--ok); box-shadow:0 0 0 1px var(--ok)}
+.vcard .winbadge{display:inline-flex; align-items:center; gap:4px; font-size:9.5px; font-weight:600; text-transform:uppercase;
+  letter-spacing:.5px; color:var(--ok); background:var(--ok-t); padding:2px 6px; border-radius:5px; margin-top:6px}
+
+/* evidence + candidates */
+.chiprow{display:flex; flex-wrap:wrap; gap:7px}
+.clue{font-size:12.5px; background:var(--surf2); border:1px solid var(--line); border-radius:7px; padding:7px 11px; color:var(--ink2);
+  opacity:0; transform:translateY(6px); animation:clueIn .4s var(--ease) forwards}
+.clue b{color:var(--ink); font-weight:600}
+.clue .imp{color:var(--mut); font-weight:450}
+.clue .imp::before{content:""; display:inline-block; width:3px; height:3px; border-radius:50%; background:var(--mut2); margin:0 8px; vertical-align:middle}
+@keyframes clueIn{to{opacity:1; transform:none}}
+.subh{font-size:11px; text-transform:uppercase; letter-spacing:.7px; color:var(--mut2); margin:18px 0 10px; font-weight:600}
+.cand{font-size:12.5px; border:1px solid var(--line); border-radius:8px; padding:8px 12px; background:var(--surf);
+  display:flex; align-items:center; gap:12px; color:var(--ink)}
+.cand .cbar{flex:1; height:5px; border-radius:99px; background:var(--surf2); overflow:hidden; min-width:40px}
+.cand .cbar i{display:block; height:100%; background:var(--accent); border-radius:99px}
+.cand .cpct{font-variant-numeric:tabular-nums; color:var(--mut); font-size:11.5px; min-width:34px; text-align:right; font-family:'Geist Mono',ui-monospace,Menlo,monospace}
+
+/* debate */
+.debate{display:flex; flex-direction:column; gap:9px}
+.turn{font-size:12.5px; border-radius:9px; padding:12px 14px; border:1px solid var(--line); background:var(--surf);
+  opacity:0; transform:translateY(8px); animation:clueIn .4s var(--ease) forwards}
+.turn.pro{border-left:2.5px solid var(--ok)} .turn.skp{border-left:2.5px solid var(--high)}
+.turn .who{font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px; display:flex; gap:8px; align-items:center}
+.turn.pro .who{color:var(--ok)} .turn.skp .who{color:var(--high)}
+.turn .who .str{margin-left:auto; color:var(--mut2); font-weight:500; letter-spacing:0; text-transform:none; font-family:'Geist Mono',ui-monospace,Menlo,monospace}
+.turn ul{margin:8px 0 0; padding-left:16px; color:var(--ink2)}
+.turn li{margin:3px 0; line-height:1.45}
+
+/* opsec report */
+.riskhead{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.risk{display:inline-flex; align-items:center; gap:6px; font-weight:600; font-size:12px;
+  text-transform:uppercase; letter-spacing:.5px; padding:6px 12px; border-radius:7px; border:1px solid transparent}
+.risk.low{background:var(--ok-t); color:var(--ok); border-color:#bbf7d0} .risk.medium{background:var(--warn-t); color:var(--warn); border-color:#fde68a}
+.risk.high{background:var(--high-t); color:var(--high); border-color:#fed7aa} .risk.critical{background:var(--crit-t); color:var(--crit); border-color:#fecaca}
+.safe{font-size:12.5px; font-weight:600; display:inline-flex; align-items:center; gap:5px}
+.safe.yes{color:var(--ok)} .safe.no{color:var(--crit)}
+.expo{font-size:13.5px; color:var(--ink2); line-height:1.6; margin-top:14px}
+.leak{border:1px solid var(--line); border-radius:9px; padding:12px 14px; margin-top:10px; font-size:13px; background:var(--surf)}
+.leak .lh{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.leak .sev{font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; padding:3px 7px; border-radius:5px}
+.sev.low{background:var(--ok-t); color:var(--ok)} .sev.medium{background:var(--warn-t); color:var(--warn)} .sev.high{background:var(--crit-t); color:var(--crit)}
+.leak .lc{font-weight:600; color:var(--ink)}
+.leak .why{color:var(--mut); margin-top:6px; line-height:1.5; font-size:12.5px}
+.leak .fix{margin-top:7px; font-size:12.5px; color:var(--ink2); display:flex; gap:7px}
+.leak .fix .fi{color:var(--ok); flex:none; font-weight:700}
+.checklist{margin-top:16px}
+.check{font-size:13px; color:var(--ink2); margin:8px 0; padding-left:26px; position:relative; line-height:1.45}
+.check::before{content:""; position:absolute; left:0; top:0; width:16px; height:16px; border-radius:4px; border:1.5px solid var(--line); background:var(--surf2)}
+.check::after{content:""; position:absolute; left:5px; top:3px; width:4px; height:8px; border:solid var(--accent); border-width:0 2px 2px 0; transform:rotate(45deg)}
+
+/* scrollbars */
+::-webkit-scrollbar{width:10px; height:10px}
+::-webkit-scrollbar-thumb{background:#d4d4d8; border-radius:99px; border:2px solid var(--bg)}
+::-webkit-scrollbar-thumb:hover{background:#a1a1aa}
+
+@media (max-width:760px){
+  .app.state-reveal .photowrap{flex-direction:column}
+  .app.state-reveal .photoframe{max-width:100%}
+  .verdict{grid-template-columns:1fr; justify-items:start}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation-duration:.001s!important; animation-iteration-count:1!important}
+  .card{transition:opacity .25s ease; transform:none}
+  .dot,.sweep,.scanline{display:none}
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header>
+    <div class="brand">
+      <div class="mark">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#fff" stroke-width="2.2"/><path d="M16.5 16.5L21 21" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </div>
+      <h1 class="g">OPSEC Lens</h1>
+      <div class="sep"></div>
+      <div class="tag">photo location intelligence</div>
+    </div>
+    <div class="hud">
+      <div class="model"><span class="dot"></span><span id="modelName">cerebras swarm</span></div>
+      <div class="meter">
+        <div class="cell"><div class="v" id="hTok">0</div><div class="k">tokens</div></div>
+        <div class="cell"><div class="v" id="hCalls">0</div><div class="k">calls</div></div>
+        <div class="cell"><div class="v" id="hTime">0.0s</div><div class="k">elapsed</div></div>
+        <div class="cell"><div class="v" id="hSpeed">0</div><div class="k">tok/s</div></div>
+      </div>
+      <button class="ghostbtn" id="reset">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 2.3 5.6M4 12V7m0 5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        New scan
+      </button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <!-- LEFT: upload / photo -->
+    <div class="left">
+      <section class="hero" id="hero">
+        <h2>What does your photo <span class="grad">reveal</span> about where you live?</h2>
+        <p>A swarm of recon agents pinpoints where a photo was taken, then reports exactly what to scrub before you post it.</p>
+        <label class="drop" id="drop">
+          <div class="ic"><svg viewBox="0 0 24 24" fill="none"><path d="M12 16V5m0 0L8 9m4-4l4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="big">Drop a photo or click to browse</div>
+          <div class="small">Use a photo of <b>your own</b>. This is a privacy tool, not for tracking other people.</div>
+          <input id="file" type="file" accept="image/*" capture="environment" hidden />
+        </label>
+      </section>
+
+      <div class="photowrap" id="photowrap" style="display:none">
+        <div class="photoframe" id="photoframe">
+          <img id="photo" alt="your photo" />
+          <div class="lens" id="lens">
+            <div class="dots" id="dots"></div>
+            <div class="sweep"></div>
+            <div class="scanline"></div>
+            <div class="brackets"><b class="tl"></b><b class="tr"></b><b class="bl"></b><b class="br"></b></div>
+            <div class="chips-layer" id="chipsLayer"></div>
+          </div>
+          <div class="photolabel" id="photolabel">
+            <div class="pl-place" id="plPlace"></div>
+            <div class="pl-sub" id="plSub"></div>
+          </div>
+        </div>
+        <div class="controls" id="controls">
+          <div class="seg" id="modeSeg">
+            <button data-mode="full" class="active">Deep scan <span class="d">~30s</span></button>
+            <button data-mode="lite">Fast <span class="d">~10s</span></button>
+          </div>
+          <button class="analyze" id="go">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="7" stroke="#fff" stroke-width="2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+            Analyze
+          </button>
+          <div class="status" id="status"><span class="pulse"></span><span class="txt" id="statusTxt">Starting…</span></div>
+        </div>
+        <div class="feed" id="feed"></div>
+        <div class="leftsum" id="leftsum">
+          <div class="ls-row"><span class="ls-k">Confidence</span><b class="ls-v" id="lsConf">—</b></div>
+          <div class="ls-row"><span class="ls-k">Privacy risk</span><b class="ls-v" id="lsRisk">—</b></div>
+          <div class="ls-row"><span class="ls-k">Coordinates</span><b class="ls-v mono" id="lsCoord">—</b></div>
+          <div class="ls-row"><span class="ls-k">Resolved in</span><b class="ls-v" id="lsTime">—</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: results -->
+    <div class="results" id="results">
+      <div class="card" id="cMatch" hidden>
+        <h3><span class="n"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Same place — visually confirmed</h3>
+        <div class="matchwrap">
+          <div class="mcol"><div class="mlabel">Your photo</div><img id="mUser" alt="your photo"></div>
+          <div class="mvs"><div class="mscore" id="mScore">—</div><div class="mverdict" id="mVerdict">match</div></div>
+          <div class="mcol"><div class="mlabel">Real Google Street View</div><img id="mSV" alt="street view"></div>
+        </div>
+      </div>
+      <div class="card" id="cAlert" hidden>
+        <div class="alert">
+          <div class="ai"><svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9 2.4 17.5a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div><div class="at">GPS metadata leak</div><div class="ad" id="alertText"></div></div>
+        </div>
+      </div>
+
+      <div class="card" id="cVerdict" hidden>
+        <h3><span class="n">1</span> Location verdict</h3>
+        <div class="verdict">
+          <div>
+            <div class="vplace" id="vPlace">—</div>
+            <div class="vmeta" id="vMeta"></div>
+          </div>
+          <div class="ring">
+            <svg width="88" height="88" viewBox="0 0 88 88">
+              <circle cx="44" cy="44" r="39" stroke="#f0f0f1" stroke-width="7" fill="none"/>
+              <circle id="ringFg" cx="44" cy="44" r="39" stroke="#2563eb" stroke-width="7" fill="none" stroke-linecap="round" stroke-dasharray="245" stroke-dashoffset="245" style="transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.3,1)"/>
+            </svg>
+            <div class="rt"><b id="ringPct">0%</b><span>confidence</span></div>
+          </div>
+          <div class="vreason" id="vReason"></div>
+        </div>
+      </div>
+
+      <div class="card" id="cPrecision" hidden>
+        <h3><span class="n"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg></span> Precision &amp; chronolocation</h3>
+        <div id="precBand"></div>
+        <div id="cueStack"></div>
+        <div id="sunShadow"></div>
+      </div>
+
+      <div class="card" id="cMap" hidden>
+        <h3><span class="n">2</span> On the map</h3>
+        <div id="map"></div>
+      </div>
+
+      <div class="card" id="cAddr" hidden>
+        <h3><span class="n">3</span> Precise pinpoint &amp; Street View</h3>
+        <div id="addrBody"></div>
+      </div>
+
+      <div class="card" id="cVerify" hidden>
+        <h3><span class="n">4</span> Visual match vs. real Street View</h3>
+        <div id="verifyBody"><div class="note">Capturing real Street View imagery…</div></div>
+      </div>
+
+      <div class="card" id="cEvidence" hidden>
+        <h3><span class="n">5</span> Evidence the swarm found</h3>
+        <div class="chiprow" id="evidence"></div>
+        <div id="candsWrap" style="display:none"><div class="subh">Candidates considered</div><div class="chiprow" id="cands" style="flex-direction:column"></div></div>
+      </div>
+
+      <div class="card" id="cDebate" hidden>
+        <h3><span class="n">6</span> Adversarial debate</h3>
+        <div class="debate" id="debate"></div>
+      </div>
+
+      <div class="card" id="cReport" hidden>
+        <h3><span class="n">7</span> OPSEC leak report</h3>
+        <div id="report"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const dedash=s=>String(s==null?"":s).replace(/\s*[—–]\s*/g,", ").replace(/,\s*,/g,",");
+const app=$("app");
+let imageDataUrl=null, mode="full", map=null, marker=null, circle=null, t0=0, timer=null;
+let revealed=false, gpsData=null;
+
+/* ---------- mode toggle ---------- */
+$("modeSeg").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  [...$("modeSeg").children].forEach(x=>x.classList.toggle("active",x===b));
+  mode=b.dataset.mode;
+});
+
+/* ---------- upload ---------- */
+const drop=$("drop"), file=$("file");
+drop.addEventListener("click",e=>{ if(e.target!==file) file.click(); });
+drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("hot");});
+drop.addEventListener("dragleave",()=>drop.classList.remove("hot"));
+drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("hot");if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);});
+file.addEventListener("change",()=>{if(file.files[0])loadFile(file.files[0]);});
+function loadFile(f){
+  const r=new FileReader();
+  r.onload=()=>{ imageDataUrl=r.result; $("photo").src=r.result;
+    $("photowrap").style.display="flex"; app.classList.add("has-photo"); };
+  r.readAsDataURL(f);
+}
+
+/* ---------- reset ---------- */
+$("reset").addEventListener("click",()=>{
+  app.className="app"; revealed=false; gpsData=null; imageDataUrl=null;
+  $("photowrap").style.display="none"; file.value="";
+  if(map){ map.remove(); map=null; marker=null; circle=null; }
+  clearInterval(timer);
+});
+
+/* ---------- twinkle dots ---------- */
+function seedDots(){
+  const box=$("dots"); box.innerHTML="";
+  const cols=14, rows=9;
+  for(let y=0;y<rows;y++) for(let x=0;x<cols;x++){
+    if(Math.random()<0.12) continue;
+    const d=document.createElement("div");
+    const cls=Math.random()<.5?(Math.random()<.5?"b":"p"):"";
+    d.className="dot"+(cls?" "+cls:"");
+    const px=((x+0.5)/cols)*100 + (Math.random()-.5)*6;
+    const py=((y+0.5)/rows)*100 + (Math.random()-.5)*7;
+    d.style.left=Math.max(2,Math.min(98,px))+"%";
+    d.style.top =Math.max(2,Math.min(98,py))+"%";
+    d.style.animationDelay=(Math.random()*2.2).toFixed(2)+"s";
+    d.style.animationDuration=(1.6+Math.random()*1.6).toFixed(2)+"s";
+    box.appendChild(d);
+    d.style.width=d.style.height=(2.2+Math.random()*2).toFixed(1)+"px";
+  }
+}
+
+/* ---------- chips on photo ---------- */
+const CHIP_POS=[{t:18,l:16},{t:24,l:74},{t:64,l:14},{t:72,l:70},{t:40,l:84},{t:80,l:42},{t:34,l:36},{t:56,l:58},{t:14,l:48}];
+let chipIdx=0;
+const chipSeen=new Set();
+function popChip(text,opt){
+  if(!text) return; const k=text.toLowerCase(); if(chipSeen.has(k))return; chipSeen.add(k);
+  if(chipIdx>=CHIP_POS.length) return;
+  const p=CHIP_POS[chipIdx++]; const c=document.createElement("div");
+  c.className="pchip"+(opt&&opt.crit?" crit":"");
+  c.style.top=p.t+"%"; c.style.left=p.l+"%";
+  c.innerHTML=`<span class="pd"></span><span>${esc(text.slice(0,28))}</span>`;
+  $("chipsLayer").appendChild(c);
+}
+
+/* ---------- status line ---------- */
+const STATUS={
+  init:"Booting the recon swarm…",
+  exif:"Inspecting hidden metadata…",
+  "tiles.start":"Reading the scene…",
+  "tiles.tile_done":"Reading signs, text &amp; brands…",
+  "lenses.start":"Cross-examining the scene…",
+  "lenses.lens_done":"Gathering geographic clues…",
+  "consolidate.done":"Consolidating the evidence…",
+  "hypothesize.done":"Forming location hypotheses…",
+  "debate.start":"Prosecutor vs. skeptic…",
+  "debate.turn":"Debating the candidates…",
+  "adjudicate.done":"Reaching a verdict…",
+  "pinpoint.done":"Pinpointing the exact street…",
+  "triangulate.done":"Triangulating landmarks…",
+  "verify.start":"Verifying against Google Street View…",
+  "verify.checked":"Matching real Street View imagery…",
+  "geocode.done":"Locking the location on the map…",
+  "opsec.done":"Compiling your privacy report…",
+  complete:"Scan complete."
+};
+function setStatus(html){ $("statusTxt").innerHTML=html; }
+
+/* ---------- HUD ---------- */
+let lastTok=0;
+function setMeter(u){ if(!u)return;
+  lastTok=u.total_tokens||0;
+  $("hTok").textContent=lastTok.toLocaleString();
+  $("hCalls").textContent=u.calls||0;
+}
+
+/* ---------- reveal helper ---------- */
+function reveal(id){ const el=$(id); if(!el)return; el.hidden=false; requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in"))); }
+
+/* ---------- run ---------- */
+$("go").addEventListener("click",runScan);
+async function runScan(){
+  if(!imageDataUrl) return;
+  resetRun();
+  app.classList.add("busy","scanning");
+  seedDots();
+  t0=performance.now();
+  timer=setInterval(()=>{ const el=(performance.now()-t0)/1000; $("hTime").textContent=el.toFixed(1)+"s"; if(el>0.3) $("hSpeed").textContent=Math.round(lastTok/el).toLocaleString(); },100);
+  setStatus(STATUS.init);
+  try{
+    const res=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({image:imageDataUrl,mode})});
+    const rd=res.body.getReader(), dec=new TextDecoder(); let buf="";
+    while(true){ const {done,value}=await rd.read(); if(done)break;
+      buf+=dec.decode(value,{stream:true}); let nl;
+      while((nl=buf.indexOf("\n"))>=0){ const ln=buf.slice(0,nl).trim(); buf=buf.slice(nl+1); if(ln) handle(JSON.parse(ln)); }
+    }
+  }catch(e){ setStatus(`<b style="color:#b91c1c">Stream error:</b> ${esc(e.message)}`); }
+  finally{ clearInterval(timer); app.classList.remove("scanning"); }
+}
+
+function resetRun(){
+  revealed=false; gpsData=null; chipIdx=0; chipSeen.clear(); seenClues.clear(); window._bestSVImg=null;
+  app.classList.remove("state-reveal");
+  $("leftsum").classList.remove("in"); $("lsConf").textContent="—"; $("lsRisk").textContent="—"; $("lsRisk").className="ls-v"; $("lsCoord").textContent="—"; $("lsTime").textContent="—";
+  $("lens").classList.remove("gone","locking");
+  $("chipsLayer").innerHTML=""; $("photolabel").classList.remove("show");
+  ["cMatch","cAlert","cVerdict","cPrecision","cMap","cAddr","cVerify","cEvidence","cDebate","cReport"].forEach(id=>{const e=$(id);e.hidden=true;e.classList.remove("in");});
+  $("precBand").innerHTML=""; $("cueStack").innerHTML=""; $("sunShadow").innerHTML="";
+  $("feed").innerHTML=""; $("hSpeed").textContent="0";
+  $("evidence").innerHTML=""; $("cands").innerHTML=""; $("candsWrap").style.display="none";
+  $("debate").innerHTML=""; $("report").innerHTML=""; $("addrBody").innerHTML="";
+  $("verifyBody").innerHTML='<div class="note">Capturing real Street View imagery…</div>'; verifyCards=[];
+  $("hTok").textContent="0"; $("hCalls").textContent="0"; $("hTime").textContent="0.0s";
+  if(marker){map.removeLayer(marker);marker=null;} if(circle){map.removeLayer(circle);circle=null;}
+}
+
+/* ---------- evidence ---------- */
+const seenClues=new Set();
+function addClue(clue,implies){
+  const k=(clue||"").toLowerCase(); if(!clue||seenClues.has(k))return; seenClues.add(k);
+  const e=$("evidence"); const d=document.createElement("div"); d.className="clue";
+  d.innerHTML=`<b>${esc(dedash(clue))}</b>${implies?`<span class="imp">${esc(dedash(implies))}</span>`:""}`;
+  d.style.animationDelay=(Math.min(e.children.length,8)*0.04)+"s";
+  e.appendChild(d);
+}
+
+/* ---------- map ---------- */
+function ensureMap(){
+  if(map) return;
+  map=L.map("map",{zoomControl:true,attributionControl:false}).setView([30,10],2);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd"}).addTo(map);
+}
+function fixMap(){ if(map){ map.invalidateSize(); } }
+function placeMarker(lat,lon,zoom,radius){
+  ensureMap();
+  if(marker)map.removeLayer(marker); if(circle)map.removeLayer(circle);
+  const ic=L.divIcon({className:"",html:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 3px rgba(37,99,235,.25),0 1px 5px rgba(0,0,0,.35);animation:pindrop .6s cubic-bezier(.2,.8,.3,1.2)"></div>',iconSize:[16,16],iconAnchor:[8,8]});
+  marker=L.marker([lat,lon],{icon:ic}).addTo(map);
+  if(radius) circle=L.circle([lat,lon],{radius:radius,color:"#2563eb",weight:1.5,fillColor:"#2563eb",fillOpacity:.08}).addTo(map);
+  map.setView([lat,lon],zoom,{animate:true});
+  setTimeout(fixMap,60); setTimeout(fixMap,650);
+}
+
+/* ---------- enter reveal ---------- */
+function enterReveal(){
+  if(revealed) return; revealed=true;
+  const lens=$("lens");
+  lens.classList.add("locking");
+  setTimeout(()=>lens.classList.add("gone"),800);
+  app.classList.add("state-reveal");
+  $("photolabel").classList.add("show");
+  setTimeout(fixMap,720);
+}
+
+/* ---------- main event handler ---------- */
+function handle(ev){
+  setMeter(ev.usage);
+  const s=ev.stage, st=ev.status;
+  const key=STATUS[s+"."+st]||STATUS[s];
+  if(key && !revealed) setStatus(key);
+
+  if(s==="init"){ if(ev.model) $("modelName").textContent=esc(ev.model.split("/").pop()).slice(0,22); return; }
+
+  if(s==="exif"){
+    if(ev.gps){ gpsData=ev.gps; popChip("GPS in metadata",{crit:true}); feedPush("Metadata","GPS coordinates embedded in this file");
+      setStatus('<b style="color:#b91c1c">GPS coordinates found in this file</b>'); }
+    return;
+  }
+
+  if(s==="tiles"&&st==="tile_done"){
+    { const ft=(ev.found.texts||[])[0]||(ev.found.brands||[])[0]||(ev.found.signs||[])[0]; if(ft) feedPush("Detail", "reads “"+ft+"”"); }
+    (ev.found.texts||[]).slice(0,4).forEach(t=>{ popChip(t); addClue(t,"visible text"); });
+    (ev.found.brands||[]).forEach(t=>{ popChip(t); addClue(t,"brand"); });
+    (ev.found.signs||[]).forEach(t=>popChip(t));
+    (ev.found.plates||[]).forEach(t=>addClue(t,"licence plate"));
+    return;
+  }
+
+  if(s==="lenses"&&st==="lens_done"){
+    if(ev.lens==="Sun & Shadow Recon") renderSunShadow(ev.clues||[]);
+    { const fc=(ev.clues||[])[0]; if(fc&&fc.clue) feedPush(ev.lens||"Agent", fc.implies?fc.clue+" → "+fc.implies:fc.clue); }
+    (ev.clues||[]).forEach(c=>{ addClue(c.clue,c.implies); });
+    (ev.guesses||[]).slice(0,1).forEach(g=>{ if(g&&g.place) popChip(g.place); });
+    return;
+  }
+
+  if(s==="consolidate"&&st==="done"){
+    $("evidence").innerHTML=""; seenClues.clear();
+    (ev.board.evidence||[]).forEach(c=>addClue(c.clue,c.implies));
+    return;
+  }
+
+  if(s==="hypothesize"&&st==="done"){
+    { const top=(ev.candidates||[])[0]; if(top&&top.place) feedPush("Synthesis","leading hypothesis: "+top.place); }
+    const c=$("cands"); c.innerHTML="";
+    (ev.candidates||[]).forEach(x=>{ const pct=Math.round((x.confidence||0)*100);
+      const d=document.createElement("div"); d.className="cand";
+      d.innerHTML=`<span style="flex:1.4;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(x.place)}</span>
+        <span class="cbar"><i style="width:${pct}%"></i></span><span class="cpct">${pct}%</span>`;
+      c.appendChild(d); });
+    if((ev.candidates||[]).length) $("candsWrap").style.display="block";
+    return;
+  }
+
+  if(s==="debate"&&st==="turn"){
+    const pro=ev.role==="prosecutor"; const box=$("debate");
+    const d=document.createElement("div"); d.className="turn "+(pro?"pro":"skp");
+    d.innerHTML=`<div class="who">${pro?"Prosecutor":"Skeptic"} · ${esc(ev.place)}<span class="str">strength ${ev.strength??"?"}</span></div>
+      <ul>${(ev.points||[]).slice(0,3).map(p=>`<li>${esc(dedash(p))}</li>`).join("")}</ul>`;
+    box.appendChild(d);
+    return;
+  }
+
+  if(s==="adjudicate"&&st==="done"){ renderVerdict(ev.verdict); enterReveal();
+    reveal("cVerdict");
+    if(gpsData){ $("alertText").innerHTML=`Exact coordinates <b>${gpsData[0].toFixed(5)}, ${gpsData[1].toFixed(5)}</b> are embedded in this file's EXIF data. Anyone who downloads it gets your precise location. Strip metadata before sharing.`; reveal("cAlert"); }
+    return;
+  }
+
+  if(s==="pinpoint"&&st==="done"){ renderPinpoint(ev.pin); reveal("cAddr"); return; }
+
+  if(s==="geocode"&&st==="done"){ renderGeocode(ev.located); return; }
+
+  if(s==="cue_meter"&&st==="done"){ renderCueStack(ev); return; }
+  if(s==="calibrate"&&st==="done"){ renderPrecBand(ev.calibration); return; }
+
+  if(s==="verify"&&st==="start"){ verifyCards=[]; $("verifyBody").innerHTML=`<div class="note">Capturing real Street View for ${ev.count} candidate location(s)…</div>`; reveal("cVerify"); return; }
+  if(s==="verify"&&st==="checked"){ addVerifyCard(ev); return; }
+  if(s==="verify"&&st==="done"){ markBestVerify(ev.best); return; }
+
+  if(s==="opsec"&&st==="done"){ renderReport(ev.report); reveal("cReport");
+    if($("debate").children.length) reveal("cDebate");
+    if($("evidence").children.length) reveal("cEvidence");
+    return;
+  }
+
+  if(s==="complete"){ setStatus(`<b>Investigation complete</b> · ${$("hCalls").textContent} agents · ~${$("hSpeed").textContent} tok/s`);
+    $("lsTime").textContent=$("hTime").textContent;
+    if($("evidence").children.length) reveal("cEvidence");
+    if($("debate").children.length) reveal("cDebate");
+    return;
+  }
+  if(s==="fatal"){ setStatus(`<b style="color:#b91c1c">Failed:</b> ${esc(ev.error)}`); return; }
+}
+
+/* ---------- renderers ---------- */
+function renderVerdict(v){
+  const b=(v&&v.best)||{};
+  $("vPlace").textContent=b.place||"Unknown location";
+  const meta=[];
+  if(b.region||b.country) meta.push(`<span class="pin"><svg viewBox="0 0 24 24" fill="none"><path d="M12 21s7-6.4 7-11a7 7 0 1 0-14 0c0 4.6 7 11 7 11Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="2"/></svg>${esc([b.region,b.country].filter(Boolean).join(", "))}</span>`);
+  if(b.radius_km) meta.push(`<span class="vchip">±${b.radius_km} km radius</span>`);
+  $("vMeta").innerHTML=meta.join("");
+  $("vReason").textContent=dedash(b.reasoning||"");
+  const pct=Math.round((b.confidence||0)*100);
+  $("ringPct").textContent=pct+"%";
+  setTimeout(()=>{ $("ringFg").style.strokeDashoffset=String(245*(1-pct/100)); },250);
+  $("plPlace").textContent=b.place||"Unknown location";
+  $("plSub").innerHTML=esc([b.region,b.country].filter(Boolean).join(", "));
+  if(typeof b.lat==="number"&&typeof b.lon==="number"){
+    reveal("cMap");
+    const z=b.radius_km?(b.radius_km<10?12:b.radius_km<60?9:6):8;
+    placeMarker(b.lat,b.lon,z,(b.radius_km||5)*1000);
+    $("lsCoord").textContent=b.lat.toFixed(4)+", "+b.lon.toFixed(4);
+  }
+  $("lsConf").textContent=pct+"%";
+  showLeftSum();
+}
+function showLeftSum(){ const el=$("leftsum"); requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add("in"))); }
+
+/* ---------- precision & chronolocation card ---------- */
+function showPrecision(){ reveal("cPrecision"); }
+function renderPrecBand(cal){
+  if(!cal) return;
+  const g=(cal.granularity||cal.band_label||"area").toString().replace(/_/g," ");
+  const rk=cal.radius_km;
+  const rad=(rk!=null&&isFinite(rk))?`±${rk<1?rk.toFixed(2):rk<10?rk.toFixed(1):Math.round(rk)} km`:"";
+  let h=`<div class="precband"><span class="precpill">${esc(g.toUpperCase())}${rad?` <span class="rad">${esc(rad)}</span>`:""}</span></div>`;
+  if(cal.honest_note) h+=`<div class="prec-note">${esc(dedash(cal.honest_note))}</div>`;
+  $("precBand").innerHTML=h; showPrecision();
+}
+function renderCueStack(ev){
+  const n=ev.n_families||0; if(!n) return;
+  const fams=(ev.families||[]).map(f=>{const t=(f&&typeof f==="object")?(f.label||f.family||""):String(f); return t?`<span class="cuefam">${esc(t.replace(/_/g," "))}</span>`:"";}).join("");
+  $("cueStack").innerHTML=`<div class="cuestack"><div class="cs-top"><span class="cs-n">${n}</span><span class="cs-lbl">independent location cues stacked</span></div>${ev.message?`<div class="cs-msg">${esc(dedash(ev.message))}</div>`:""}<div class="cuefams">${fams}</div></div>`;
+  showPrecision();
+}
+function renderSunShadow(clues){
+  if(!clues||!clues.length) return;
+  const rows=clues.slice(0,5).map(c=>`<div class="ss-row"><b>${esc(dedash(c.clue||""))}</b>${c.implies?` <span style="color:var(--mut)">${esc(dedash(c.implies))}</span>`:""}</div>`).join("");
+  $("sunShadow").innerHTML=`<div class="sunshadow"><div class="subh">Sun &amp; shadow chronolocation</div>${rows}</div>`;
+  showPrecision();
+}
+
+/* ---------- live agent feed ---------- */
+function feedPush(agent,text){
+  if(!text) return; const f=$("feed"); if(!f) return;
+  const d=document.createElement("div"); d.className="feedline";
+  d.innerHTML=`<span class="fa">${esc(agent)}</span><span class="ft">${esc(dedash(text))}</span>`;
+  f.prepend(d);
+  while(f.children.length>6) f.removeChild(f.lastChild);
+}
+
+/* ---------- hero 'same place' match proof ---------- */
+function renderMatch(userUrl, svUrl, score){
+  if(!userUrl||!svUrl) return;
+  $("mUser").src=userUrl; $("mSV").src=svUrl;
+  const pct=(score!=null&&isFinite(score))?Math.round(score*100):null;
+  const col=pct==null?"var(--mut)":pct>=60?"var(--ok)":pct>=30?"var(--warn)":"var(--crit)";
+  $("mScore").textContent=pct!=null?pct+"%":"match"; $("mScore").style.color=col;
+  $("mVerdict").textContent=(pct!=null&&pct>=60)?"same place":"compared"; $("mVerdict").style.color=col;
+  reveal("cMatch");
+}
+
+function renderPinpoint(pin){
+  const street=[pin.house_number,pin.street].filter(Boolean).join(" ");
+  const line=[street,pin.district,pin.city,pin.region,pin.country].filter(Boolean).join(", ")||"Area level only";
+  const prec=(pin.precision||"area").toLowerCase();
+  let h=`<div class="addr">${esc(dedash(line))}</div><div class="addrrow"><span class="prec ${esc(prec)}">${esc(prec.replace(/_/g," "))}</span>`;
+  if((pin.visible_address_text||[]).length)
+    h+=`<span class="readtext">read on signs: <b>“${esc(pin.visible_address_text.join("”, “"))}”</b></span>`;
+  h+=`</div><div id="svslot"><div class="note">Resolving coordinates &amp; Street View…</div></div>`;
+  $("addrBody").innerHTML=h;
+}
+
+function renderGeocode(L0){
+  const slot=$("svslot");
+  if(!L0||(!L0.resolved&&L0.source!=="exif_gps"&&L0.source!=="visual_match")){
+    if(slot) slot.innerHTML='<div class="note">No precise street match. The map shows the best area-level estimate.</div>';
+    return;
+  }
+  if(typeof L0.lat==="number"){
+    reveal("cMap");
+    const z={exact_address:18,street:16,district:13,city:11}[L0.precision]||14;
+    const r={exact_address:80,street:300,district:1500,city:6000}[L0.precision]||400;
+    placeMarker(L0.lat,L0.lon,z,r);
+    $("lsCoord").textContent=L0.lat.toFixed(5)+", "+L0.lon.toFixed(5);
+  }
+  const sv=L0.streetview||{};
+  let h="";
+  if(L0.visually_confirmed){
+    h+=`<div style="margin-bottom:11px"><span class="confbadge">✓ visually confirmed ${Math.round((L0.match_score||0)*100)}% vs Street View</span></div>`;
+    $("plSub").innerHTML=`${esc($("plSub").textContent)} <span class="confbadge">✓ confirmed</span>`;
+  }
+  if(L0.source==="exif_gps") h+=`<div style="margin-bottom:11px"><span class="prec exact_address">exact point from EXIF GPS</span></div>`;
+  if(L0.display_name) h+=`<div class="readtext" style="margin-bottom:4px">${esc(L0.display_name)}</div>`;
+  if(sv.embed){
+    const poster=verifyImages[String(L0.lat)]||(window._bestSVImg||null);
+    h+=`<div class="svhold" data-embed="${esc(sv.embed)}">
+      ${poster?`<img class="svposter" src="${esc(poster)}" alt="street view">`:`<div class="svposter svph"></div>`}
+      <div class="live">Street View</div>
+      <div class="svplay"><span class="pp"><svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7z" fill="#fff"/></svg></span>Open the interactive Street View</div>
+    </div>`;
+  }
+  else { h+=`<div class="note">Street View imagery isn't available at this exact point.</div>`; }
+  h+=`<div class="svbtns">`;
+  if(sv.pano) h+=`<a href="${esc(sv.pano)}" target="_blank" rel="noopener">Open Street View</a>`;
+  if(sv.maps) h+=`<a class="alt" href="${esc(sv.maps)}" target="_blank" rel="noopener">Open in Maps</a>`;
+  h+=`</div>`;
+  if(L0.satellite){ h+=`<img class="satimg" src="${esc(L0.satellite)}" alt="satellite view" loading="lazy"><div class="satlabel">Satellite / aerial view</div>`; }
+  if(slot) slot.innerHTML=h; else $("addrBody").insertAdjacentHTML("beforeend",h);
+}
+
+let verifyCards=[]; const verifyImages={};
+function addVerifyCard(ev){
+  if(ev.image) verifyImages[String(ev.lat)]=ev.image;
+  const box=$("verifyBody");
+  if(!box.querySelector(".vgrid")) box.innerHTML='<div class="vgrid" id="vgrid"></div>';
+  const grid=$("vgrid");
+  const sc=ev.match_score; const score=sc!=null?Math.round(sc*100)+"%":"—";
+  const col=sc==null?"var(--mut)":sc>=0.6?"#15803d":sc>=0.3?"#b45309":"#b91c1c";
+  const d=document.createElement("div"); d.className="vcard"; d.dataset.lat=String(ev.lat);
+  d.innerHTML=`${ev.image?`<img src="${esc(ev.image)}" alt="street view">`:`<div class="noimg">no imagery here</div>`}
+    <div class="vm"><div class="sc" style="color:${col}">${score} <span style="font-size:11px;color:var(--mut);font-weight:400">match</span></div>
+      <div class="pl">${esc((ev.place||"").slice(0,60))}</div></div>`;
+  grid.appendChild(d); verifyCards.push(d);
+}
+function markBestVerify(best){
+  if(!best) return;
+  if(verifyImages[String(best.lat)]) window._bestSVImg=verifyImages[String(best.lat)];
+  verifyCards.forEach(d=>{ if(d.dataset.lat===String(best.lat)){ d.classList.add("win");
+    const vm=d.querySelector(".vm"); if(vm&&!vm.querySelector(".winbadge")) vm.insertAdjacentHTML("beforeend",'<div class="winbadge">✓ best match</div>'); } });
+  if(window._bestSVImg && imageDataUrl) renderMatch(imageDataUrl, window._bestSVImg, best.match_score);
+}
+
+function renderReport(r){
+  const risk=(r.overall_risk||"medium").toLowerCase();
+  const lr=$("lsRisk"); lr.textContent=(r.overall_risk||"medium").toUpperCase(); lr.className="ls-v r-"+risk;
+  let h=`<div class="riskhead"><span class="risk ${esc(risk)}">${esc(r.overall_risk||"medium")} risk</span>
+    <span class="safe ${r.safe_to_post?"yes":"no"}">${r.safe_to_post?"✓ Safe to post":"✗ Not safe to post"}</span></div>`;
+  if(r.exposure_summary) h+=`<div class="expo">${esc(dedash(r.exposure_summary))}</div>`;
+  (r.leaks||[]).forEach((l,i)=>{ const sev=(l.severity||"low").toLowerCase();
+    h+=`<div class="leak" style="animation:clueIn .4s var(--ease) ${i*0.05}s both">
+      <div class="lh"><span class="sev ${esc(sev)}">${esc(l.severity||"low")}</span><span class="lc">${esc(dedash(l.clue||""))}</span></div>
+      ${l.why?`<div class="why">${esc(dedash(l.why))}</div>`:""}
+      ${l.fix?`<div class="fix"><span class="fi">→</span><span>${esc(dedash(l.fix))}</span></div>`:""}</div>`; });
+  if((r.scrub_checklist||[]).length){ h+=`<div class="checklist"><div class="subh">Scrub before posting</div>`;
+    r.scrub_checklist.forEach(c=>h+=`<div class="check">${esc(dedash(c))}</div>`); h+=`</div>`; }
+  $("report").innerHTML=h;
+}
+
+$("addrBody").addEventListener("click",e=>{
+  const hold=e.target.closest(".svhold"); if(!hold||!hold.dataset.embed) return;
+  hold.innerHTML=`<iframe class="svframe" style="margin-top:0;height:100%;border-radius:10px" src="${hold.dataset.embed}" allow="accelerometer; gyroscope" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+  hold.style.cursor="default";
+});
+window.addEventListener("resize",()=>{ clearTimeout(window._rz); window._rz=setTimeout(fixMap,120); });
+</script>
+</body>
+</html>

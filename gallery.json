@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Berlin, Brandenburg Gate",
+    "lat": 52.5163,
+    "lon": 13.3777,
+    "caption": "neoclassical sandstone gate, wide european boulevard, german latin signage, temperate climate, overcast grey sky, paved plaza, deciduous trees"
+  },
+  {
+    "name": "Nerja, Spain",
+    "lat": 36.745,
+    "lon": -3.873,
+    "caption": "whitewashed andalusian houses, terracotta tile roofs, mediterranean coast, palm trees, spanish signage, narrow sloping streets, bright sun, blue sea"
+  },
+  {
+    "name": "Paris, Eiffel Tower",
+    "lat": 48.8584,
+    "lon": 2.2945,
+    "caption": "haussmann cream limestone buildings, grey zinc mansard roofs, wrought iron balconies, french signage, plane trees, wide boulevards, overcast"
+  },
+  {
+    "name": "London, Westminster",
+    "lat": 51.5007,
+    "lon": -0.1246,
+    "caption": "victorian red brick, gothic stone, red double decker buses, english signage, left hand traffic, overcast damp sky, black cabs"
+  },
+  {
+    "name": "New York City, Times Square",
+    "lat": 40.758,
+    "lon": -73.9855,
+    "caption": "dense glass steel skyscrapers, yellow taxis, neon billboards, english signage, grid streets, fire escapes, busy urban crowd"
+  },
+  {
+    "name": "Tokyo, Shibuya",
+    "lat": 35.6595,
+    "lon": 139.7005,
+    "caption": "dense neon signage japanese kanji, narrow streets, vending machines, modern glass towers, pedestrian crossing, overhead wires, busy"
+  },
+  {
+    "name": "Rome, Colosseum",
+    "lat": 41.8902,
+    "lon": 12.4922,
+    "caption": "ancient travertine ruins, ochre stucco buildings, cobblestone streets, italian signage, umbrella pines, mediterranean warm sun, scooters"
+  },
+  {
+    "name": "Cairo, Giza Pyramids",
+    "lat": 29.9792,
+    "lon": 31.1342,
+    "caption": "desert sand, limestone pyramids, arid dusty haze, palm trees, arabic signage, low sandstone buildings, hot dry climate"
+  },
+  {
+    "name": "Sydney, Opera House",
+    "lat": -33.8568,
+    "lon": 151.2153,
+    "caption": "harbour waterfront, white sail shell roof, modern architecture, eucalyptus trees, english signage, bright sun, southern hemisphere coast"
+  },
+  {
+    "name": "Rio de Janeiro, Christ the Redeemer",
+    "lat": -22.9519,
+    "lon": -43.2105,
+    "caption": "tropical green mountains, sandy beaches, portuguese signage, lush rainforest, hillside favelas, hazy humid sky, palm trees"
+  },
+  {
+    "name": "Moscow, Red Square",
+    "lat": 55.7539,
+    "lon": 37.6208,
+    "caption": "colorful onion domes, red brick kremlin walls, cyrillic signage, wide cobbled plaza, cold snow, grey winter sky, orthodox architecture"
+  },
+  {
+    "name": "Santorini, Greece",
+    "lat": 36.4618,
+    "lon": 25.3753,
+    "caption": "whitewashed cubic houses, blue domed churches, aegean cliffs, caldera sea view, greek signage, bright sun, narrow stepped lanes"
+  }
+]

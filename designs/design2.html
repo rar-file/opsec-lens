@@ -1,0 +1,87 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OPSEC Lens — Editorial Ink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;color:#1a1714;background:#f6f1e7;padding:46px 60px 70px}
+.s{font-family:'Fraunces',serif}
+.rule{border:none;border-top:1.5px solid #1a1714;margin:0}
+header{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:18px}
+header .b{font-family:'Fraunces';font-weight:600;font-size:15px;letter-spacing:3px;text-transform:uppercase}
+header .meta{font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#8a8073}
+.kick{margin-top:30px;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#b03a2e;font-weight:600}
+h1.title{font-family:'Fraunces';font-weight:600;font-size:76px;line-height:.98;letter-spacing:-2px;margin:10px 0 0;max-width:14ch}
+.dek{font-family:'Fraunces';font-size:21px;font-style:italic;color:#564f44;margin-top:18px;max-width:46ch;line-height:1.4}
+.lead{display:grid;grid-template-columns:1.4fr 1fr;gap:40px;margin-top:34px;align-items:start}
+.figure{border:1px solid #1a1714}
+.figure img{width:100%;height:360px;object-fit:cover;display:block}
+.cap{font-size:12px;color:#8a8073;padding:9px 12px;border-top:1px solid #1a1714;font-style:italic}
+.side .conf{font-family:'Fraunces';font-size:14px;font-weight:600;color:#1a6b3a;border:1.5px solid #1a6b3a;display:inline-block;padding:6px 12px;border-radius:2px}
+.kv{margin-top:22px}
+.kv .r{display:flex;justify-content:space-between;padding:13px 0;border-bottom:1px solid #d8cfbe;font-size:14px}
+.kv .r .k{color:#8a8073}.kv .r .v{font-family:'Fraunces';font-weight:600}
+.dropcap::first-letter{font-family:'Fraunces';font-size:64px;font-weight:600;float:left;line-height:.78;padding:6px 10px 0 0}
+.body{font-size:15px;line-height:1.7;color:#2b2620;margin-top:14px}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:40px;border-top:1.5px solid #1a1714;border-bottom:1.5px solid #1a1714}
+.cols3>div{padding:22px 24px;border-right:1px solid #d8cfbe}.cols3>div:last-child{border:none}
+.cols3 h3{font-family:'Fraunces';font-size:13px;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px}
+.ev{font-size:13.5px;line-height:1.55;padding:7px 0;border-bottom:1px dotted #cabfa9}.ev:last-child{border:none}
+.ev b{font-family:'Fraunces';font-weight:600}
+.gal{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:40px}
+.gal .f{border:1px solid #1a1714}
+.gal img{width:100%;height:230px;object-fit:cover;display:block}
+.gal .cap b{font-style:normal;font-family:'Fraunces'}
+.risk{font-family:'Fraunces';font-weight:600;color:#b03a2e}
+.leak{display:flex;gap:12px;padding:11px 0;border-bottom:1px dotted #cabfa9;font-size:13.5px}
+.leak b{font-family:'Fraunces'}
+.sev{font-size:11px;font-weight:700;letter-spacing:1px}
+</style></head><body>
+<header>
+ <div class="b s">◦ OPSEC Lens</div>
+ <div class="meta">Geolocation Dossier · No. 037 · Berlin Edition</div>
+</header>
+<hr class="rule">
+
+<div class="kick">Confirmed location dossier</div>
+<h1 class="title s">The Brandenburg Gate.</h1>
+<div class="dek s">A single dusk photograph, no text, no metadata — resolved to a doorstep and verified against the real world.</div>
+
+<div class="lead">
+ <div class="figure"><img src="photo.jpg"><div class="cap">Exhibit A — the photograph as submitted. Twilight, Berlin-Mitte.</div></div>
+ <div class="side">
+  <span class="conf">✓ Visually confirmed · 100%</span>
+  <div class="kv">
+   <div class="r"><span class="k">Place</span><span class="v">Brandenburg Gate</span></div>
+   <div class="r"><span class="k">City</span><span class="v">Berlin, Germany</span></div>
+   <div class="r"><span class="k">Address</span><span class="v">Pariser Platz 1</span></div>
+   <div class="r"><span class="k">Postal</span><span class="v">10117</span></div>
+   <div class="r"><span class="k">Radius</span><span class="v">± 50 m</span></div>
+   <div class="r"><span class="k">Agents</span><span class="v">37 · 24.6k tok</span></div>
+  </div>
+  <p class="body dropcap">Five reconnaissance lenses, an adversarial debate, and a final visual cross-check against live Street View placed this image within fifty metres of its origin — then proved it with a photograph of the very same square.</p>
+ </div>
+</div>
+
+<div class="cols3">
+ <div><h3 class="s">The Evidence</h3>
+  <div class="ev"><b>Quadriga sculpture</b> — chariot drawn by four horses, unique to the gate.</div>
+  <div class="ev"><b>Doric columns</b> — Prussian neoclassical signature.</div>
+  <div class="ev"><b>Warm sandstone</b> — Central European monument stone.</div>
+  <div class="ev"><b>Open stone plaza</b> — a major tourist concourse.</div>
+ </div>
+ <div><h3 class="s">The Verdict, Argued</h3>
+  <p class="body" style="margin-top:0">The prosecutor cited the Quadriga atop a Doric gate as a unique signature; the skeptic countered that Prussian neoclassicism is common. The Quadriga settled it.</p>
+ </div>
+ <div><h3 class="s">Exposure <span class="risk">— Medium</span></h3>
+  <div class="leak"><span class="sev" style="color:#b03a2e">HIGH</span><div><b>Quadriga + columns.</b> Crop the monument to hide the city.</div></div>
+  <div class="leak"><span class="sev" style="color:#a8742a">MED</span><div><b>Pariser Platz.</b> Blur or crop the plaza.</div></div>
+ </div>
+</div>
+
+<div class="gal">
+ <div class="f"><img src="sv.jpg"><div class="cap"><b class="s">Exhibit B</b> — real Google Street View, Pariser Platz. Match: 100%.</div></div>
+ <div class="f"><img src="sat.jpg"><div class="cap"><b class="s">Exhibit C</b> — satellite of the confirmed coordinates.</div></div>
+</div>
+</body></html>
